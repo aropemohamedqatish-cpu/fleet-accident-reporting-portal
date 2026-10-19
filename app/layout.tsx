@@ -40,8 +40,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="ar" dir="rtl" className={`${plexArabic.variable} bg-background`}>
-      <body className="font-sans antialiased">
+    <html lang="ar" dir="rtl" className={`${plexArabic.variable} bg-slate-50`}>
+      <body className="min-h-dvh bg-slate-50 font-sans antialiased">
         {children}
         <Toaster position="top-center" richColors closeButton />
         {process.env.NODE_ENV === 'production' && <Analytics />}

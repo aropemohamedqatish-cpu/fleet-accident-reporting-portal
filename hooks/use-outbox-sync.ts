@@ -45,7 +45,16 @@ export function useOutboxSync() {
       const staged = await listStaged().catch(() => [])
       if (staged.length === 0 || cancelled) return setPending(0)
       setSyncing(true)
-      const results = await flushOutbox()
+      let results: Awaited<ReturnType<typeof flushOutbox>> = []
+      try {
+        results = await flushOutbox()
+      } catch (error) {
+        if (!cancelled) {
+          toast.error('تعذّرت مزامنة البلاغات المحفوظة', {
+            description: error instanceof Error ? error.message : 'يرجى التحقق من الاتصال والمحاولة لاحقاً.',
+          })
+        }
+      }
       if (cancelled) return
       setSyncing(false)
       await refresh()

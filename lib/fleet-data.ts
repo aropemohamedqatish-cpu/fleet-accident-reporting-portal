@@ -3,7 +3,7 @@ export type Vehicle = {
   make: string
   model: string
   year: number
-  governorate: string
+  category: string
   department: string
   policyNumber: string
 }
@@ -19,11 +19,11 @@ const MAKES: Array<[string, string]> = [
   ['Kia', 'Sportage'],
 ]
 
-const GOVERNORATES = ['دمشق', 'ريف دمشق', 'حلب', 'حمص', 'حماة', 'اللاذقية', 'طرطوس', 'السويداء']
 const DEPARTMENTS = ['التوزيع', 'الصيانة', 'المبيعات', 'الإدارة', 'الخدمات اللوجستية']
 
-export const FLEET_PLATE_START = 520101
+export const FLEET_PLATE_START = 1200001
 export const FLEET_SIZE = 400
+const PLATES_PER_PREFIX = FLEET_SIZE / 2
 
 /**
  * Embedded fleet cache: shipped with the bundle so plate lookups resolve
@@ -31,12 +31,15 @@ export const FLEET_SIZE = 400
  */
 export const FLEET: readonly Vehicle[] = Array.from({ length: FLEET_SIZE }, (_, i) => {
   const [make, model] = MAKES[i % MAKES.length]
+  const prefix = i < PLATES_PER_PREFIX ? '12' : '61'
+  const serial = (i % PLATES_PER_PREFIX) + 1
+  const plate = `${prefix}${String(serial).padStart(5, '0')}`
   return {
-    plate: String(FLEET_PLATE_START + i),
+    plate,
     make,
     model,
     year: 2016 + (i % 9),
-    governorate: GOVERNORATES[i % GOVERNORATES.length],
+    category: plate.startsWith('12') ? 'سياحية خاصة' : 'نقل خاص / شاحنة',
     department: DEPARTMENTS[i % DEPARTMENTS.length],
     policyNumber: `ARP-FL-${String(i + 1).padStart(4, '0')}`,
   }

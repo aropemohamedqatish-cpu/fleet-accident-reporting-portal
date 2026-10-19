@@ -1,10 +1,14 @@
 import { z } from 'zod'
 import { normalizeDigits } from './fleet-data'
 
-export const MAX_FILES = 10
-export const MAX_FILE_SIZE = 10 * 1024 * 1024
+export const MAX_IMAGES = 10
+export const MAX_IMAGE_FILE_SIZE = 10 * 1024 * 1024
+export const MAX_VIDEO_FILE_SIZE = 50 * 1024 * 1024
 export const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp'] as const
 export type AllowedMime = (typeof ALLOWED_MIME)[number]
+export const ALLOWED_VIDEO_MIME = ['video/mp4', 'video/quicktime', 'video/webm'] as const
+export type AllowedVideoMime = (typeof ALLOWED_VIDEO_MIME)[number]
+export type AllowedMediaMime = AllowedMime | AllowedVideoMime
 
 const NAME_PART = /^[\p{L}\u0600-\u06FF'-]{2,}$/u
 
@@ -33,7 +37,7 @@ export type ReporterInput = z.input<typeof reporterSchema>
 export type ReporterData = z.output<typeof reporterSchema>
 
 export const incidentPayloadSchema = z.object({
-  plate: z.string().regex(/^\d{6}$/),
+  plate: z.string().regex(/^\d{7}$/, 'رقم اللوحة يجب أن يتكون من 7 أرقام'),
   location: z.discriminatedUnion('mode', [
     z.object({
       mode: z.literal('gps'),
@@ -48,13 +52,26 @@ export const incidentPayloadSchema = z.object({
     .array(
       z.object({
         name: z.string().max(200),
-        size: z.number().int().positive().max(MAX_FILE_SIZE),
+        size: z.number().int().positive().max(MAX_IMAGE_FILE_SIZE),
         type: z.enum(ALLOWED_MIME),
       }),
     )
-    .min(1)
-    .max(MAX_FILES),
-  createdAt: z.string(),
+    .max(MAX_IMAGES),
+  videos: z
+    .array(
+      z.object({
+        name: z.string().max(200),
+        size: z.number().int().positive().max(MAX_VIDEO_FILE_SIZE),
+        type: z.enum(ALLOWED_VIDEO_MIME),
+      }),
+    )
+    .max(1)
+    .default([])
+    .optional(),
+  createdAt: z.string().datetime(),
+}).refine((payload) => payload.photos.length + (payload.videos?.length ?? 0) > 0, {
+  message: 'يرجى إرفاق صورة واحدة على الأقل أو مقطع فيديو واحد.',
+  path: ['photos'],
 })
 
 export type IncidentPayload = z.input<typeof incidentPayloadSchema>
@@ -71,5 +88,21 @@ export async function sniffImageMime(file: File): Promise<AllowedMime | null> {
   const riff = String.fromCharCode(...bytes.slice(0, 4))
   const webp = String.fromCharCode(...bytes.slice(8, 12))
   if (riff === 'RIFF' && webp === 'WEBP') return 'image/webp'
+  return null
+}
+
+export async function sniffVideoMime(file: File): Promise<AllowedVideoMime | null> {
+  const bytes = new Uint8Array(await file.slice(0, 12).arrayBuffer())
+  if (
+    bytes.length >= 12 &&
+    String.fromCharCode(...bytes.slice(4, 8)) === 'ftyp'
+  ) {
+    const brand = String.fromCharCode(...bytes.slice(8, 12))
+    if (brand === 'qt  ') return 'video/quicktime'
+    return 'video/mp4'
+  }
+  if (bytes.length >= 4 && bytes[0] === 0x1a && bytes[1] === 0x45 && bytes[2] === 0xdf && bytes[3] === 0xa3) {
+    return 'video/webm'
+  }
   return null
 }

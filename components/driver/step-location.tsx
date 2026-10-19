@@ -90,7 +90,11 @@ export function StepLocation({ location, manualText, onManualTextChange, onLocat
             </div>
           </dl>
           <p className="text-xs text-muted-foreground">{`دقة التحديد: ±${Math.round(gps.accuracy)} متر`}</p>
-          <Button variant="outline" onClick={requestLocation} className="gap-2">
+          <Button
+            variant="outline"
+            onClick={requestLocation}
+            className="h-12 gap-2 border-success font-semibold text-success hover:bg-success/10"
+          >
             <LocateFixed className="size-4" aria-hidden="true" />
             إعادة تحديد الموقع
           </Button>
@@ -99,7 +103,7 @@ export function StepLocation({ location, manualText, onManualTextChange, onLocat
         <Button
           size="lg"
           variant={manualMode ? 'outline' : 'default'}
-          className="h-14 gap-2 text-base font-semibold"
+          className="h-14 gap-2 bg-[#003366] text-base font-semibold text-white shadow-md hover:bg-[#00264d]"
           onClick={requestLocation}
           disabled={geoState === 'locating'}
         >
@@ -122,7 +126,11 @@ export function StepLocation({ location, manualText, onManualTextChange, onLocat
       )}
 
       {!gps && !manualMode && (
-        <Button variant="link" className="gap-1.5 self-start px-0" onClick={() => setManualMode(true)}>
+        <Button
+          variant="outline"
+          className="h-12 w-full gap-2 border-[#003366] font-semibold text-[#003366] hover:bg-[#003366]/5"
+          onClick={() => setManualMode(true)}
+        >
           <PencilLine className="size-4" aria-hidden="true" />
           أفضّل وصف الموقع يدوياً
         </Button>
@@ -135,12 +143,12 @@ export function StepLocation({ location, manualText, onManualTextChange, onLocat
           </Label>
           <Textarea
             id={textId}
-            rows={4}
+            rows={5}
             maxLength={500}
             value={manualText}
             onChange={(e) => onManualTextChange(e.target.value)}
             placeholder="مثال: أوتوستراد المزة، قرب جسر الرئيس، الاتجاه نحو ساحة الأمويين"
-            className="text-base"
+            className="min-h-36 resize-y rounded-xl p-4 text-base leading-relaxed"
           />
           <p className="text-xs text-muted-foreground">اذكر اسم الشارع وأقرب معلم واضح والاتجاه.</p>
         </div>

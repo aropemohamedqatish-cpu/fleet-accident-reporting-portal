@@ -15,26 +15,28 @@ type Props = {
   location: LocationData
   reporter: ReporterData
   photoCount: number
+  videoCount: number
   onNewReport: () => void
 }
 
-function buildWhatsAppText({ outcome, vehicle, location, reporter, photoCount }: Omit<Props, 'onNewReport'>) {
-  const loc =
+function buildWhatsAppText({ outcome, vehicle, location, reporter, photoCount, videoCount }: Omit<Props, 'onNewReport'>) {
+  const locationText =
     location.mode === 'gps'
       ? `https://maps.google.com/?q=${location.lat.toFixed(6)},${location.lng.toFixed(6)}`
       : location.description
   return [
-    '*بلاغ حادث مركبة - آروب سورية*',
+    '*بلاغ حادث مركبة — آروب سورية*',
     `رقم البلاغ: ${outcome.ticketId}`,
     `رقم اللوحة: ${vehicle.plate}`,
     `المركبة: ${vehicle.make} ${vehicle.model} ${vehicle.year}`,
     `رقم الوثيقة: ${vehicle.policyNumber}`,
-    `السائق: ${reporter.fullName}`,
-    `الجوال: ${reporter.mobile}`,
-    `الموقع: ${loc}`,
-    `عدد الصور: ${photoCount}`,
-    `الوصف: ${reporter.notes}`,
-    `التاريخ: ${new Date(outcome.submittedAt).toLocaleString('ar-SY')}`,
+    `اسم السائق: ${reporter.fullName}`,
+    `رقم الجوال: ${reporter.mobile}`,
+    `موقع الحادث: ${locationText}`,
+    `عدد الصور المرفقة: ${photoCount}`,
+    `عدد مقاطع الفيديو المرفقة: ${videoCount}`,
+    `وصف الحادث: ${reporter.notes}`,
+    `تاريخ البلاغ: ${new Date(outcome.submittedAt).toLocaleString('ar-SY')}`,
   ].join('\n')
 }
 
@@ -43,6 +45,8 @@ export function SuccessScreen(props: Props) {
   const [copied, setCopied] = useState(false)
   const staged = outcome.status === 'staged'
   const shortId = outcome.ticketId.slice(0, 8).toUpperCase()
+  const submissionHour = new Date(outcome.submittedAt).getHours()
+  const isLateNight = submissionHour >= 20 || submissionHour < 8
   const whatsappHref = `https://wa.me/?text=${encodeURIComponent(buildWhatsAppText(props))}`
 
   async function copyId() {
@@ -80,6 +84,20 @@ export function SuccessScreen(props: Props) {
         </div>
       </div>
 
+      {isLateNight && (
+        <aside className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-950" role="note">
+          <p className="mb-3 text-sm font-medium leading-relaxed">
+            تنبيه للمساندة الفورية: نظراً لوقوع الحادث في وقت متأخر، إذا لم يتم الرد عليك عبر واتساب خلال 10 دقائق وتطلب الأمر تدخلاً ميدانياً عاجلاً، يرجى الاتصال مباشرة بمشرف الطوارئ المناوب على الرقم التالي: [0999999999]
+          </p>
+          <a
+            href="tel:0999999999"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg bg-amber-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-800"
+          >
+            اتصل بمشرف الطوارئ: 0999999999
+          </a>
+        </aside>
+      )}
+
       <div className="rounded-2xl border bg-card p-5">
         <p className="text-sm text-muted-foreground">رقم البلاغ</p>
         <div className="mt-1 flex items-center justify-between gap-3">
@@ -108,18 +126,20 @@ export function SuccessScreen(props: Props) {
       </div>
 
       <div className="mt-auto flex flex-col gap-3">
-        <a
-          href={whatsappHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={cn(
-            buttonVariants({ size: 'lg' }),
-            'h-14 gap-2 bg-[#25D366] text-base font-semibold text-[#0b3d1f] hover:bg-[#25D366]/90',
-          )}
-        >
-          <MessageCircle className="size-5" aria-hidden="true" />
-          مشاركة البلاغ عبر واتساب
-        </a>
+        {!staged && (
+          <a
+            href={whatsappHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(
+              buttonVariants({ size: 'lg' }),
+              'h-14 gap-2 bg-[#25D366] text-base font-semibold text-[#0b3d1f] hover:bg-[#25D366]/90',
+            )}
+          >
+            <MessageCircle className="size-5" aria-hidden="true" />
+            مشاركة البلاغ عبر واتساب
+          </a>
+        )}
         <Button variant="outline" size="lg" className="h-12 gap-2" onClick={onNewReport}>
           <Plus className="size-4" aria-hidden="true" />
           بلاغ جديد

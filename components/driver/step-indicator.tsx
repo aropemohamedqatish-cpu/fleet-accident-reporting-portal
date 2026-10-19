@@ -1,7 +1,7 @@
 import { Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const STEPS = ['المركبة', 'الموقع', 'الصور', 'البيانات']
+const STEPS = ['المركبة', 'الموقع', 'الوسائط', 'البيانات']
 
 export function StepIndicator({ current }: { current: number }) {
   return (

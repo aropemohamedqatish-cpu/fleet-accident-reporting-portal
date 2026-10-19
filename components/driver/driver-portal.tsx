@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { toast } from 'sonner'
 import { findVehicle, normalizePlate } from '@/lib/fleet-data'
-import { stageReport, submitIncident } from '@/lib/offline-queue'
-import type { LocationData, PhotoItem, SubmissionOutcome } from '@/lib/report-types'
+import { IncidentSubmissionError, stageReport, submitIncident } from '@/lib/offline-queue'
+import type { LocationData, MediaItem, SubmissionOutcome } from '@/lib/report-types'
 import type { IncidentPayload, ReporterData, ReporterInput } from '@/lib/validation'
 import { useOutboxSync } from '@/hooks/use-outbox-sync'
 import { ConnectionBanner } from './connection-banner'
@@ -26,17 +26,21 @@ export function DriverPortal() {
   const [plate, setPlate] = useState('')
   const [location, setLocation] = useState<LocationData | null>(null)
   const [manualText, setManualText] = useState('')
-  const [photos, setPhotos] = useState<PhotoItem[]>([])
+  const [photos, setPhotos] = useState<MediaItem[]>([])
+  const [videos, setVideos] = useState<MediaItem[]>([])
   const [reporter, setReporter] = useState<ReporterInput>(EMPTY_REPORTER)
   const [submitted, setSubmitted] = useState<{ outcome: SubmissionOutcome; data: ReporterData } | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   const idempotencyKey = useRef<string | null>(null)
   const inFlight = useRef(false)
-  const photosRef = useRef(photos)
-  photosRef.current = photos
+  const mediaRef = useRef({ photos, videos })
+  mediaRef.current = { photos, videos }
 
-  useEffect(() => () => photosRef.current.forEach((p) => URL.revokeObjectURL(p.previewUrl)), [])
+  useEffect(
+    () => () => [...mediaRef.current.photos, ...mediaRef.current.videos].forEach((item) => URL.revokeObjectURL(item.previewUrl)),
+    [],
+  )
 
   const vehicle = findVehicle(plate)
   const go = (s: Step) => {
@@ -44,20 +48,21 @@ export function DriverPortal() {
     window.scrollTo({ top: 0 })
   }
 
-  function removePhoto(id: string) {
-    setPhotos((prev) => {
-      const target = prev.find((p) => p.id === id)
-      if (target) URL.revokeObjectURL(target.previewUrl)
-      return prev.filter((p) => p.id !== id)
-    })
+  function removeMedia(id: string) {
+    const item = [...photos, ...videos].find((media) => media.id === id)
+    if (item) URL.revokeObjectURL(item.previewUrl)
+    setPhotos((prev) => prev.filter((media) => media.id !== id))
+    setVideos((prev) => prev.filter((media) => media.id !== id))
   }
 
   function resetReport() {
-    photos.forEach((p) => URL.revokeObjectURL(p.previewUrl))
+    const media = [...photos, ...videos]
+    media.forEach((item) => URL.revokeObjectURL(item.previewUrl))
     setPlate('')
     setLocation(null)
     setManualText('')
     setPhotos([])
+    setVideos([])
     setReporter(EMPTY_REPORTER)
     setSubmitted(null)
     idempotencyKey.current = null
@@ -76,11 +81,13 @@ export function DriverPortal() {
       location,
       reporter: data,
       photos: photos.map((p) => ({ name: p.file.name, size: p.file.size, type: p.mime })),
+      videos: videos.map((video) => ({ name: video.file.name, size: video.file.size, type: video.mime })),
       createdAt: new Date().toISOString(),
     }
+    const files = [...photos, ...videos].map((item) => item.file)
 
     const stageLocally = async () => {
-      await stageReport({ idempotencyKey: key, payload, stagedAt: payload.createdAt })
+      await stageReport({ idempotencyKey: key, payload, files, stagedAt: payload.createdAt })
       await refresh()
       setSubmitted({ outcome: { ticketId: key, status: 'staged', submittedAt: payload.createdAt }, data })
       go(5)
@@ -91,14 +98,18 @@ export function DriverPortal() {
         await stageLocally()
         return
       }
-      const res = await submitIncident(payload, key)
+      const res = await submitIncident(payload, key, files)
       setSubmitted({ outcome: { ticketId: res.incidentId, status: 'submitted', submittedAt: payload.createdAt }, data })
       go(5)
     } catch (err) {
       if (err instanceof TypeError) {
         await stageLocally()
+      } else if (err instanceof IncidentSubmissionError) {
+        toast.error('تعذّر إرسال البلاغ', { description: err.message })
       } else {
-        toast.error('تعذّر إرسال البلاغ', { description: 'يرجى المحاولة مرة أخرى. لن يتم تكرار البلاغ.' })
+        toast.error('تعذّر إرسال البلاغ', {
+          description: err instanceof Error ? err.message : 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.',
+        })
       }
     } finally {
       inFlight.current = false
@@ -135,8 +146,12 @@ export function DriverPortal() {
         {step === 3 && (
           <StepMedia
             photos={photos}
-            onAdd={(items) => setPhotos((prev) => [...prev, ...items])}
-            onRemove={removePhoto}
+            videos={videos}
+            onAdd={(items) => {
+              setPhotos((prev) => [...prev, ...items.filter((item) => item.kind === 'image')])
+              setVideos((prev) => [...prev, ...items.filter((item) => item.kind === 'video')])
+            }}
+            onRemove={removeMedia}
             onBack={() => go(2)}
             onNext={() => go(4)}
           />
@@ -158,6 +173,7 @@ export function DriverPortal() {
             location={location}
             reporter={submitted.data}
             photoCount={photos.length}
+            videoCount={videos.length}
             onNewReport={resetReport}
           />
         )}

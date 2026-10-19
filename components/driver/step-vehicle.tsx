@@ -20,7 +20,7 @@ export function StepVehicle({ plate, onPlateChange, onBack, onNext }: Props) {
   const feedbackId = useId()
   const digits = normalizePlate(plate)
   const vehicle = findVehicle(plate)
-  const showError = digits.length >= 6 && !vehicle
+  const showError = digits.length >= 7 && !vehicle
 
   return (
     <StepShell
@@ -34,23 +34,28 @@ export function StepVehicle({ plate, onPlateChange, onBack, onNext }: Props) {
         <Label htmlFor={inputId} className="text-base">
           رقم لوحة المركبة
         </Label>
-        <Input
-          id={inputId}
-          inputMode="numeric"
-          autoComplete="off"
-          autoFocus
-          dir="ltr"
-          maxLength={10}
-          placeholder={String(FLEET_PLATE_START + 144)}
-          value={plate}
-          onChange={(e) => onPlateChange(e.target.value)}
-          aria-invalid={showError || undefined}
-          aria-describedby={feedbackId}
+        <div
           className={cn(
-            'h-16 text-center text-3xl font-bold tracking-[0.3em] tabular-nums',
-            vehicle && 'border-success ring-3 ring-success/20',
+            'rounded-xl border-[3px] border-[#003366] bg-white p-1 shadow-inner transition-colors',
+            vehicle && 'border-success',
+            showError && 'border-destructive',
           )}
-        />
+        >
+          <Input
+            id={inputId}
+            inputMode="numeric"
+            autoComplete="off"
+            autoFocus
+            dir="ltr"
+            maxLength={10}
+            placeholder={String(FLEET_PLATE_START + 144)}
+            value={plate}
+            onChange={(e) => onPlateChange(e.target.value)}
+            aria-invalid={showError || undefined}
+            aria-describedby={feedbackId}
+            className="h-16 rounded-lg border-0 bg-transparent text-center text-3xl font-bold tracking-[0.3em] text-[#003366] tabular-nums shadow-none focus-visible:ring-0"
+          />
+        </div>
         <div id={feedbackId} aria-live="polite" className="min-h-6 text-sm">
           {vehicle && (
             <p className="flex items-center gap-1.5 font-medium text-success">
@@ -65,7 +70,7 @@ export function StepVehicle({ plate, onPlateChange, onBack, onNext }: Props) {
             </p>
           )}
           {!vehicle && !showError && (
-            <p className="text-muted-foreground">أرقام اللوحات المسجّلة تتكون من 6 خانات.</p>
+            <p className="text-muted-foreground">أرقام اللوحات المسجّلة تتكون من 7 خانات.</p>
           )}
         </div>
       </div>
@@ -78,8 +83,8 @@ export function StepVehicle({ plate, onPlateChange, onBack, onNext }: Props) {
           <dl className="grid flex-1 grid-cols-2 gap-x-4 gap-y-1 text-sm">
             <dt className="text-muted-foreground">المركبة</dt>
             <dd className="font-semibold" dir="ltr">{`${vehicle.make} ${vehicle.model} ${vehicle.year}`}</dd>
-            <dt className="text-muted-foreground">المحافظة</dt>
-            <dd className="font-semibold">{vehicle.governorate}</dd>
+            <dt className="text-muted-foreground">الفئة</dt>
+            <dd className="font-semibold">{vehicle.category}</dd>
             <dt className="text-muted-foreground">رقم الوثيقة</dt>
             <dd className="font-semibold" dir="ltr">{vehicle.policyNumber}</dd>
           </dl>
