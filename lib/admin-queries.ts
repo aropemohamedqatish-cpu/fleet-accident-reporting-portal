@@ -86,6 +86,7 @@ export async function getIncidents(filters: AdminFilters): Promise<IncidentRow[]
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     plateNumber: row.vehicle.plateNumber,
+    vehicleClass: row.vehicle.plateNumber.slice(0, 2),
     mediaCount: row._count.media,
   }))
 }

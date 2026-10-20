@@ -2,11 +2,29 @@
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useTransition } from 'react'
-import { CalendarDays, ListFilter } from 'lucide-react'
+import { CalendarDays, CarFront, ListFilter, RotateCcw } from 'lucide-react'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { STATUS_LABELS } from '@/lib/admin-claims'
+import { Button } from '@/components/ui/button'
+import { Segmented, type SegmentedOption } from '@/components/ui/segmented'
+import { INCIDENT_STATUSES, STATUS_META } from '@/lib/admin-claims'
+import { PLATE_CATEGORIES } from '@/lib/plate'
+
+type StatusValue = 'ALL' | (typeof INCIDENT_STATUSES)[number]
+type PrefixValue = 'ALL' | '12' | '61'
+
+const STATUS_OPTIONS: readonly SegmentedOption<StatusValue>[] = [
+  { value: 'ALL', label: 'كل الحالات' },
+  ...INCIDENT_STATUSES.map((status) => ({ value: status, label: STATUS_META[status].label })),
+]
+
+const PREFIX_OPTIONS: readonly SegmentedOption<PrefixValue>[] = [
+  { value: 'ALL', label: 'كل الفئات' },
+  ...PLATE_CATEGORIES.map((category) => ({
+    value: category.prefix as PrefixValue,
+    label: `${category.label} (${category.prefix})`,
+  })),
+]
 
 export function ClaimsSelectFilters() {
   const router = useRouter()
@@ -14,11 +32,12 @@ export function ClaimsSelectFilters() {
   const searchParams = useSearchParams()
   const [pending, startTransition] = useTransition()
 
-  const status = searchParams.get('status') ?? 'ALL'
+  const status = (searchParams.get('status') ?? 'ALL') as StatusValue
+  const prefix = (searchParams.get('prefix') ?? 'ALL') as PrefixValue
   const from = searchParams.get('from') ?? ''
   const to = searchParams.get('to') ?? ''
 
-  function setParam(key: string, value: string | null, fallback: string) {
+  function setParam(key: string, value: string, fallback: string) {
     const params = new URLSearchParams(searchParams.toString())
     if (!value || value === fallback) params.delete(key)
     else params.set(key, value)
@@ -29,62 +48,48 @@ export function ClaimsSelectFilters() {
     startTransition(() => router.replace(pathname, { scroll: false }))
   }
 
-  const hasActive = status !== 'ALL' || from !== '' || to !== ''
+  const hasActive = status !== 'ALL' || prefix !== 'ALL' || from !== '' || to !== ''
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <div className="space-y-1.5">
-        <Label htmlFor="claims-status" className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
-          <ListFilter className="size-3.5 text-[#003366]" aria-hidden="true" />
-          حالة البلاغ
-        </Label>
-        <Select value={status} onValueChange={(v) => setParam('status', v, 'ALL')} disabled={pending}>
-          <SelectTrigger id="claims-status" className="h-11 border-slate-300 bg-white">
-            <SelectValue placeholder="كل الحالات" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">كل الحالات</SelectItem>
-            <SelectItem value="SUBMITTED">{STATUS_LABELS.SUBMITTED}</SelectItem>
-            <SelectItem value="UNDER_REVIEW">{STATUS_LABELS.UNDER_REVIEW}</SelectItem>
-            <SelectItem value="SENT_TO_INSURER">{STATUS_LABELS.SENT_TO_INSURER}</SelectItem>
-            <SelectItem value="CLOSED">{STATUS_LABELS.CLOSED}</SelectItem>
-          </SelectContent>
-        </Select>
+    <div className="relative space-y-5" aria-busy={pending}>
+      {pending && <span aria-hidden="true" className="skeleton absolute -top-2 inset-x-0 h-1 rounded-full" />}
+
+      <div className="grid gap-5 xl:grid-cols-2">
+        <div className="space-y-2">
+          <Label>
+            <ListFilter className="size-4 text-brand" aria-hidden="true" />
+            حالة البلاغ
+          </Label>
+          <Segmented label="حالة البلاغ" options={STATUS_OPTIONS} value={status} onChange={(v) => setParam('status', v, 'ALL')} disabled={pending} />
+        </div>
+        <div className="space-y-2">
+          <Label>
+            <CarFront className="size-4 text-brand" aria-hidden="true" />
+            فئة المركبة
+          </Label>
+          <Segmented label="فئة المركبة" options={PREFIX_OPTIONS} value={prefix} onChange={(v) => setParam('prefix', v, 'ALL')} disabled={pending} />
+        </div>
       </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="claims-from" className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
-          <CalendarDays className="size-3.5 text-[#003366]" aria-hidden="true" />
-          من تاريخ
-        </Label>
-        <Input
-          id="claims-from"
-          type="date"
-          value={from}
-          max={to || undefined}
-          onChange={(e) => setParam('from', e.target.value, '')}
-          className="h-11 border-slate-300 bg-white"
-        />
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="claims-to" className="text-xs font-semibold text-slate-700">إلى تاريخ</Label>
-        <Input
-          id="claims-to"
-          type="date"
-          value={to}
-          min={from || undefined}
-          onChange={(e) => setParam('to', e.target.value, '')}
-          className="h-11 border-slate-300 bg-white"
-        />
-      </div>
-      <div className="flex items-end">
-        <button
-          type="button"
-          disabled={!hasActive || pending}
-          onClick={clearAll}
-          className="h-11 w-full rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-        >
+
+      <div className="grid items-end gap-4 sm:grid-cols-2 xl:grid-cols-[1fr_1fr_auto]">
+        <div className="space-y-2">
+          <Label htmlFor="claims-from">
+            <CalendarDays className="size-4 text-brand" aria-hidden="true" />
+            من تاريخ
+          </Label>
+          <Input id="claims-from" type="date" value={from} max={to || undefined} onChange={(e) => setParam('from', e.target.value, '')} />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="claims-to">
+            <CalendarDays className="size-4 text-brand" aria-hidden="true" />
+            إلى تاريخ
+          </Label>
+          <Input id="claims-to" type="date" value={to} min={from || undefined} onChange={(e) => setParam('to', e.target.value, '')} />
+        </div>
+        <Button type="button" variant="outline" size="lg" disabled={!hasActive || pending} onClick={clearAll} className="sm:col-span-2 xl:col-span-1">
+          <RotateCcw className="size-4" aria-hidden="true" />
           مسح الفلاتر
-        </button>
+        </Button>
       </div>
     </div>
   )

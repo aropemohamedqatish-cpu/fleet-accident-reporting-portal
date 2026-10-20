@@ -25,3 +25,11 @@ export function splitPlate(plate: string): { prefix: string; serial: string } {
 export function isCompletePlate(plate: string): boolean {
   return plate.length === PLATE_LENGTH
 }
+
+/** فئات لوحات الأسطول المستخدمة في التصفح وعرض الجداول الإدارية. */
+export type PlateCategory = { prefix: string; label: string }
+
+export const PLATE_CATEGORIES: readonly PlateCategory[] = [
+  { prefix: '12', label: 'النقل الخفيف' },
+  { prefix: '61', label: 'النقل الثقيل' },
+]
