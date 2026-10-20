@@ -13,6 +13,11 @@ enum AdminRole {
   ADMIN
 }
 
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
 model Vehicle {
   id           String     @id @default(uuid())
   plateNumber  String     @unique
@@ -54,6 +59,7 @@ model AccidentMedia {
   
   fileUrl      String   
   fileType     String   
+  mediaType    MediaType @default(IMAGE)
   fileSize     Int      
   createdAt    DateTime @default(now())
 }

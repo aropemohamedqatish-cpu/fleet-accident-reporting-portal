@@ -53,7 +53,7 @@ export function StepVehicle({ plate, onPlateChange, onBack, onNext }: Props) {
             onChange={(e) => onPlateChange(e.target.value)}
             aria-invalid={showError || undefined}
             aria-describedby={feedbackId}
-            className="h-16 rounded-lg border-0 bg-transparent text-center text-3xl font-bold tracking-[0.3em] text-[#003366] tabular-nums shadow-none focus-visible:ring-0"
+            className="h-16 rounded-lg border-0 bg-transparent text-center text-3xl font-bold tracking-[0.3em] text-[#003366] placeholder:text-[#003366]/20 tabular-nums shadow-none focus-visible:ring-0"
           />
         </div>
         <div id={feedbackId} aria-live="polite" className="min-h-6 text-sm">

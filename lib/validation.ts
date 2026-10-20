@@ -3,8 +3,13 @@ import { normalizeDigits } from './fleet-data'
 
 export const MAX_IMAGES = 10
 export const MAX_IMAGE_FILE_SIZE = 10 * 1024 * 1024
+export const MAX_VIDEOS = 1
+export const MAX_VIDEO_FILE_SIZE = 50 * 1024 * 1024
 export const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp'] as const
+export const ALLOWED_VIDEO_MIME = ['video/mp4', 'video/quicktime', 'video/webm'] as const
 export type AllowedMime = (typeof ALLOWED_MIME)[number]
+export type AllowedVideoMime = (typeof ALLOWED_VIDEO_MIME)[number]
+export type AllowedMediaMime = AllowedMime | AllowedVideoMime
 
 const NAME_PART = /^[\p{L}\u0600-\u06FF'-]{2,}$/u
 
@@ -53,6 +58,16 @@ export const incidentPayloadSchema = z.object({
       }),
     )
     .max(MAX_IMAGES),
+  videos: z
+    .array(
+      z.object({
+        name: z.string().max(200),
+        size: z.number().int().positive().max(MAX_VIDEO_FILE_SIZE),
+        type: z.enum(ALLOWED_VIDEO_MIME),
+      }),
+    )
+    .max(MAX_VIDEOS)
+    .optional(),
   createdAt: z.string().datetime(),
 }).refine((payload) => payload.photos.length > 0, {
   message: 'يرجى إرفاق صورة واحدة على الأقل.',
