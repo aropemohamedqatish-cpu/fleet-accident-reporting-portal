@@ -8,29 +8,23 @@ import {
   incidentPayloadSchema,
   MAX_IMAGE_FILE_SIZE,
   MAX_IMAGES,
-  MAX_VIDEO_FILE_SIZE,
   type AllowedMime,
-  type AllowedVideoMime,
 } from '@/lib/validation'
 
 export const runtime = 'nodejs'
 
-const MAX_TOTAL_UPLOAD_SIZE = MAX_IMAGES * MAX_IMAGE_FILE_SIZE + MAX_VIDEO_FILE_SIZE
+const MAX_TOTAL_UPLOAD_SIZE = MAX_IMAGES * MAX_IMAGE_FILE_SIZE
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-const EXTENSIONS: Record<AllowedMime | AllowedVideoMime, string> = {
+const EXTENSIONS: Record<AllowedMime, string> = {
   'image/jpeg': '.jpg',
   'image/png': '.png',
   'image/webp': '.webp',
-  'video/mp4': '.mp4',
-  'video/quicktime': '.mov',
-  'video/webm': '.webm',
 }
 
 type UploadedMedia = {
   id: string
   buffer: Buffer
-  mime: AllowedMime | AllowedVideoMime
-  kind: 'IMAGE' | 'VIDEO'
+  mime: AllowedMime
   size: number
   url: string
 }
@@ -39,7 +33,7 @@ function errorResponse(error: string, status: number, details?: unknown) {
   return NextResponse.json({ error, ...(details ? { details } : {}) }, { status })
 }
 
-function detectMediaMime(buffer: Buffer): AllowedMime | AllowedVideoMime | null {
+function detectImageMime(buffer: Buffer): AllowedMime | null {
   if (buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
     return 'image/jpeg'
   }
@@ -63,22 +57,7 @@ function detectMediaMime(buffer: Buffer): AllowedMime | AllowedVideoMime | null 
   ) {
     return 'image/webp'
   }
-  if (buffer.length >= 12 && buffer.toString('ascii', 4, 8) === 'ftyp') {
-    const brand = buffer.toString('ascii', 8, 12)
-    return brand === 'qt  ' ? 'video/quicktime' : 'video/mp4'
-  }
-  if (buffer.length >= 4 && buffer[0] === 0x1a && buffer[1] === 0x45 && buffer[2] === 0xdf && buffer[3] === 0xa3) {
-    return 'video/webm'
-  }
   return null
-}
-
-function isAllowedImageMime(mime: AllowedMime | AllowedVideoMime | null): mime is AllowedMime {
-  return mime === 'image/jpeg' || mime === 'image/png' || mime === 'image/webp'
-}
-
-function isAllowedVideoMime(mime: AllowedMime | AllowedVideoMime | null): mime is AllowedVideoMime {
-  return mime === 'video/mp4' || mime === 'video/quicktime' || mime === 'video/webm'
 }
 
 function isFile(value: FormDataEntryValue): value is File {
@@ -92,7 +71,6 @@ function createRequestHash(
   const hash = createHash('sha256')
   hash.update(JSON.stringify(payload))
   for (const item of media) {
-    hash.update(item.kind)
     hash.update(item.buffer)
   }
   return hash.digest('hex')
@@ -144,10 +122,9 @@ export async function POST(request: Request) {
     return errorResponse('بيانات البلاغ غير مكتملة أو غير صالحة.', 400, parsed.error.issues)
   }
 
-  const videos = parsed.data.videos ?? []
   const uploadedFiles = formData.getAll('files')
   const files = uploadedFiles.filter(isFile)
-  const expectedCount = parsed.data.photos.length + videos.length
+  const expectedCount = parsed.data.photos.length
   if (uploadedFiles.length !== expectedCount || files.length !== uploadedFiles.length) {
     return errorResponse('عدد ملفات الوسائط المرسلة لا يطابق بيانات البلاغ.', 400)
   }
@@ -157,18 +134,13 @@ export async function POST(request: Request) {
     return errorResponse('الحجم الإجمالي للوسائط يتجاوز الحد المسموح.', 400)
   }
 
-  const expectedMedia = [
-    ...parsed.data.photos.map((metadata) => ({ metadata, kind: 'IMAGE' as const })),
-    ...videos.map((metadata) => ({ metadata, kind: 'VIDEO' as const })),
-  ]
+  const expectedMedia = parsed.data.photos
   const media: UploadedMedia[] = []
   for (const [index, file] of files.entries()) {
-    const expected = expectedMedia[index]
-    const metadata = expected.metadata
-    const maxFileSize = expected.kind === 'IMAGE' ? MAX_IMAGE_FILE_SIZE : MAX_VIDEO_FILE_SIZE
+    const metadata = expectedMedia[index]
     if (
       file.size === 0 ||
-      file.size > maxFileSize ||
+      file.size > MAX_IMAGE_FILE_SIZE ||
       file.size !== metadata.size ||
       file.name !== metadata.name
     ) {
@@ -181,15 +153,11 @@ export async function POST(request: Request) {
     } catch {
       return errorResponse('تعذّر قراءة أحد ملفات الوسائط المرفقة.', 400)
     }
-    const mime = detectMediaMime(buffer)
-    const mimeAllowed =
-      expected.kind === 'IMAGE'
-        ? isAllowedImageMime(mime)
-        : isAllowedVideoMime(mime)
-    if (!mime || !mimeAllowed || mime !== metadata.type) {
-      return errorResponse('أحد ملفات الوسائط غير صالح أو بصيغة غير مدعومة.', 400)
+    const mime = detectImageMime(buffer)
+    if (!mime || mime !== metadata.type) {
+      return errorResponse('أحد الملفات ليس صورة صالحة أو أن صيغته غير مدعومة.', 400)
     }
-    media.push({ id: randomUUID(), buffer, mime, kind: expected.kind, size: buffer.length, url: '' })
+    media.push({ id: randomUUID(), buffer, mime, size: buffer.length, url: '' })
   }
 
   const requestHash = createRequestHash(parsed.data, media)
@@ -251,7 +219,6 @@ export async function POST(request: Request) {
               create: media.map((item) => ({
                 fileUrl: item.url,
                 fileType: item.mime,
-                mediaType: item.kind,
                 fileSize: item.size,
               })),
             },

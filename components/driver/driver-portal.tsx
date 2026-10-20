@@ -5,8 +5,9 @@ import Image from 'next/image'
 import { toast } from 'sonner'
 import { findVehicle, normalizePlate } from '@/lib/fleet-data'
 import { IncidentSubmissionError, stageReport, submitIncident } from '@/lib/offline-queue'
+import { buildIncidentWhatsAppUrl, INCIDENT_SUPERVISORS } from '@/lib/incident-whatsapp'
 import type { LocationData, MediaItem, SubmissionOutcome } from '@/lib/report-types'
-import type { AllowedMime, AllowedVideoMime, IncidentPayload, ReporterData, ReporterInput } from '@/lib/validation'
+import type { IncidentPayload, ReporterData, ReporterInput } from '@/lib/validation'
 import { useOutboxSync } from '@/hooks/use-outbox-sync'
 import { ConnectionBanner } from './connection-banner'
 import { WelcomeScreen } from './welcome-screen'
@@ -27,18 +28,18 @@ export function DriverPortal() {
   const [location, setLocation] = useState<LocationData | null>(null)
   const [manualText, setManualText] = useState('')
   const [photos, setPhotos] = useState<MediaItem[]>([])
-  const [videos, setVideos] = useState<MediaItem[]>([])
   const [reporter, setReporter] = useState<ReporterInput>(EMPTY_REPORTER)
   const [submitted, setSubmitted] = useState<{ outcome: SubmissionOutcome; data: ReporterData } | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   const idempotencyKey = useRef<string | null>(null)
   const inFlight = useRef(false)
-  const mediaRef = useRef({ photos, videos })
-  mediaRef.current = { photos, videos }
+  const whatsappWindows = useRef<Array<Window | null>>([])
+  const photosRef = useRef(photos)
+  photosRef.current = photos
 
   useEffect(
-    () => () => [...mediaRef.current.photos, ...mediaRef.current.videos].forEach((item) => URL.revokeObjectURL(item.previewUrl)),
+    () => () => photosRef.current.forEach((item) => URL.revokeObjectURL(item.previewUrl)),
     [],
   )
 
@@ -49,20 +50,17 @@ export function DriverPortal() {
   }
 
   function removeMedia(id: string) {
-    const item = [...photos, ...videos].find((media) => media.id === id)
+    const item = photos.find((media) => media.id === id)
     if (item) URL.revokeObjectURL(item.previewUrl)
     setPhotos((prev) => prev.filter((media) => media.id !== id))
-    setVideos((prev) => prev.filter((media) => media.id !== id))
   }
 
   function resetReport() {
-    const media = [...photos, ...videos]
-    media.forEach((item) => URL.revokeObjectURL(item.previewUrl))
+    photos.forEach((item) => URL.revokeObjectURL(item.previewUrl))
     setPlate('')
     setLocation(null)
     setManualText('')
     setPhotos([])
-    setVideos([])
     setReporter(EMPTY_REPORTER)
     setSubmitted(null)
     idempotencyKey.current = null
@@ -73,6 +71,18 @@ export function DriverPortal() {
     if (inFlight.current || !vehicle || !location) return
     inFlight.current = true
     setSubmitting(true)
+    whatsappWindows.current = navigator.onLine
+      ? INCIDENT_SUPERVISORS.map(() => {
+          const popup = window.open('about:blank', '_blank')
+          if (popup) popup.opener = null
+          return popup
+        })
+      : []
+
+    const closePendingWhatsAppWindows = () => {
+      whatsappWindows.current.forEach((popup) => popup?.close())
+      whatsappWindows.current = []
+    }
 
     idempotencyKey.current ??= crypto.randomUUID()
     const key = idempotencyKey.current
@@ -80,11 +90,10 @@ export function DriverPortal() {
       plate: normalizePlate(plate),
       location,
       reporter: data,
-      photos: photos.map((p) => ({ name: p.file.name, size: p.file.size, type: p.mime as AllowedMime })),
-      videos: videos.map((video) => ({ name: video.file.name, size: video.file.size, type: video.mime as AllowedVideoMime })),
+      photos: photos.map((photo) => ({ name: photo.file.name, size: photo.file.size, type: photo.mime })),
       createdAt: new Date().toISOString(),
     }
-    const files = [...photos, ...videos].map((item) => item.file)
+    const files = photos.map((photo) => photo.file)
 
     const stageLocally = async () => {
       await stageReport({ idempotencyKey: key, payload, files, stagedAt: payload.createdAt })
@@ -99,14 +108,30 @@ export function DriverPortal() {
         return
       }
       const res = await submitIncident(payload, key, files)
-      setSubmitted({ outcome: { ticketId: res.incidentId, status: 'submitted', submittedAt: payload.createdAt }, data })
+      const outcome: SubmissionOutcome = { ticketId: res.incidentId, status: 'submitted', submittedAt: payload.createdAt }
+      const whatsappDetails = { outcome, vehicle, location, reporter: data, photoCount: files.length }
+      whatsappWindows.current.forEach((popup, index) => {
+        if (popup && !popup.closed) {
+          try {
+            popup.location.replace(buildIncidentWhatsAppUrl(INCIDENT_SUPERVISORS[index].phone, whatsappDetails))
+          } catch (error) {
+            console.error('Could not open WhatsApp chat after incident submission.', error)
+            popup.close()
+          }
+        }
+      })
+      whatsappWindows.current = []
+      setSubmitted({ outcome, data })
       go(5)
     } catch (err) {
       if (err instanceof TypeError) {
+        closePendingWhatsAppWindows()
         await stageLocally()
       } else if (err instanceof IncidentSubmissionError) {
+        closePendingWhatsAppWindows()
         toast.error('تعذّر إرسال البلاغ', { description: err.message })
       } else {
+        closePendingWhatsAppWindows()
         toast.error('تعذّر إرسال البلاغ', {
           description: err instanceof Error ? err.message : 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.',
         })
@@ -146,11 +171,7 @@ export function DriverPortal() {
         {step === 3 && (
           <StepMedia
             photos={photos}
-            videos={videos}
-            onAdd={(items) => {
-              setPhotos((prev) => [...prev, ...items.filter((item) => item.kind === 'image')])
-              setVideos((prev) => [...prev, ...items.filter((item) => item.kind === 'video')])
-            }}
+            onAdd={(items) => setPhotos((prev) => [...prev, ...items])}
             onRemove={removeMedia}
             onBack={() => go(2)}
             onNext={() => go(4)}
@@ -173,7 +194,6 @@ export function DriverPortal() {
             location={location}
             reporter={submitted.data}
             photoCount={photos.length}
-            videoCount={videos.length}
             onNewReport={resetReport}
           />
         )}

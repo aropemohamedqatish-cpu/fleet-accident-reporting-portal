@@ -1,4 +1,4 @@
-import type { AllowedMediaMime } from './validation'
+import type { AllowedMime } from './validation'
 
 export type LocationData =
   | { mode: 'gps'; lat: number; lng: number; accuracy: number }
@@ -7,8 +7,7 @@ export type LocationData =
 export type MediaItem = {
   id: string
   file: File
-  mime: AllowedMediaMime
-  kind: 'image' | 'video'
+  mime: AllowedMime
   previewUrl: string
 }
 

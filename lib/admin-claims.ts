@@ -22,7 +22,6 @@ export function isIncidentStatus(value: string): value is IncidentStatus {
 
 export type AdminFilters = {
   status: IncidentStatus | 'ALL'
-  prefix: 'ALL' | '12' | '61'
   from: string
   to: string
   search: string
@@ -30,7 +29,6 @@ export type AdminFilters = {
 
 export const DEFAULT_FILTERS: AdminFilters = {
   status: 'ALL',
-  prefix: 'ALL',
   from: '',
   to: '',
   search: '',
@@ -45,7 +43,6 @@ export type IncidentRow = {
   createdAt: Date
   updatedAt: Date
   plateNumber: string
-  vehicleClass?: string
   mediaCount: number
 }
 
@@ -53,7 +50,6 @@ export type IncidentMedia = {
   id: string
   fileUrl: string
   fileType: string
-  mediaType: 'IMAGE' | 'VIDEO'
   fileSize: number
 }
 
@@ -103,11 +99,6 @@ export function mapLink(lat: number, lng: number) {
 
 export function shortRef(id: string) {
   return id.slice(0, 8).toUpperCase()
-}
-
-export const VEHICLE_CLASS_LABELS: Record<string, string> = {
-  '12': 'سياحية خاصة',
-  '61': 'نقل خاص / شاحنة',
 }
 
 export function initialsOf(name: string) {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useId } from 'react'
-import { CheckCircle2, XCircle, Car } from 'lucide-react'
+import { CheckCircle2, XCircle } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { findVehicle, normalizePlate, FLEET_PLATE_START } from '@/lib/fleet-data'
@@ -58,36 +58,24 @@ export function StepVehicle({ plate, onPlateChange, onBack, onNext }: Props) {
         </div>
         <div id={feedbackId} aria-live="polite" className="min-h-6 text-sm">
           {vehicle && (
-            <p className="flex items-center gap-1.5 font-medium text-success">
-              <CheckCircle2 className="size-4" aria-hidden="true" />
-              تم التحقق من المركبة ضمن الأسطول
+            <p className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 font-bold text-emerald-900">
+              <CheckCircle2 className="size-5 shrink-0" aria-hidden="true" />
+              رقم اللوحة مسجّل ضمن أسطول الشركة. يمكنك المتابعة.
             </p>
           )}
           {showError && (
-            <p className="flex items-center gap-1.5 font-medium text-destructive">
+            <p className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 font-bold text-red-900">
               <XCircle className="size-4" aria-hidden="true" />
-              رقم اللوحة غير مسجّل ضمن أسطول الشركة. تحقق من الرقم وأعد المحاولة.
+              لم يتم العثور على رقم اللوحة ضمن أسطول الشركة. تحقق من الرقم وحاول مجدداً.
             </p>
           )}
           {!vehicle && !showError && (
-            <p className="text-muted-foreground">أرقام اللوحات المسجّلة تتكون من 7 خانات.</p>
+            <p className="text-sm font-medium leading-6 text-slate-700">
+              أدخل رقم اللوحة المكوّن من 7 أرقام للتحقق من تسجيله ضمن أسطول الشركة.
+            </p>
           )}
         </div>
       </div>
-
-      {vehicle && (
-        <div className="flex items-center gap-4 rounded-xl border bg-card p-4">
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-secondary text-primary">
-            <Car className="size-6" aria-hidden="true" />
-          </div>
-          <dl className="grid flex-1 grid-cols-2 gap-x-4 gap-y-1 text-sm">
-            <dt className="text-muted-foreground">المركبة</dt>
-            <dd className="font-semibold" dir="ltr">{`${vehicle.make} ${vehicle.model} ${vehicle.year}`}</dd>
-            <dt className="text-muted-foreground">رقم الوثيقة</dt>
-            <dd className="font-semibold" dir="ltr">{vehicle.policyNumber}</dd>
-          </dl>
-        </div>
-      )}
     </StepShell>
   )
 }

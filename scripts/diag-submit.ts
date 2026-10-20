@@ -35,7 +35,6 @@ async function main() {
             {
               fileUrl: `/uploads/incidents/1200001/${accidentId}/${randomUUID()}.jpg`,
               fileType: "image/jpeg",
-              mediaType: "IMAGE",
               fileSize: 1024,
             },
           ],

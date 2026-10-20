@@ -2,11 +2,12 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard } from 'lucide-react'
+import { LayoutDashboard, UsersRound } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const NAV_ITEMS = [
   { href: '/admin/dashboard', label: 'الحوادث', hint: 'البلاغات الواردة وحالات المعالجة', icon: LayoutDashboard },
+  { href: '/admin/users', label: 'المستخدمون', hint: 'إدارة حسابات الموظفين', icon: UsersRound, adminOnly: true },
 ] as const
 
 function useActive() {
@@ -14,11 +15,11 @@ function useActive() {
   return (href: string) => pathname === href || pathname.startsWith(`${href}/`)
 }
 
-export function SidebarNav() {
+export function SidebarNav({ role }: { role: 'ADMIN' | 'AGENT' }) {
   const isActive = useActive()
   return (
     <nav aria-label="التنقل الرئيسي" className="flex flex-col gap-1.5 px-4">
-      {NAV_ITEMS.map(({ href, label, hint, icon: Icon }) => {
+      {NAV_ITEMS.filter((item) => !('adminOnly' in item) || role === 'ADMIN').map(({ href, label, hint, icon: Icon }) => {
         const active = isActive(href)
         return (
           <Link
@@ -52,14 +53,15 @@ export function SidebarNav() {
   )
 }
 
-export function TabBarNav() {
+export function TabBarNav({ role }: { role: 'ADMIN' | 'AGENT' }) {
   const isActive = useActive()
+  const items = NAV_ITEMS.filter((item) => !('adminOnly' in item) || role === 'ADMIN')
   return (
     <nav
       aria-label="التنقل الرئيسي"
       className="fixed inset-x-4 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-md gap-1.5 rounded-[1.75rem] bg-brand-strong p-1.5 shadow-float lg:hidden"
     >
-      {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+      {items.map(({ href, label, icon: Icon }) => {
         const active = isActive(href)
         return (
           <Link

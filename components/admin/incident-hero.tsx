@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowRight, CalendarDays, CheckCircle2, Clock3, FileStack, Images, Send, TriangleAlert, Video } from 'lucide-react'
+import { ArrowRight, CalendarDays, CheckCircle2, Clock3, FileStack, Images, Send, TriangleAlert } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { PlateBadge } from '@/components/brand/plate'
 import { CopyRefButton } from './copy-ref-button'
@@ -14,23 +14,19 @@ const STATUS_ICONS = {
 
 function HeroStatusBadge({ status }: { status: string }) {
   const Icon = STATUS_ICONS[status as keyof typeof STATUS_ICONS]
-  if (!Icon) return <Badge variant="outline" className="gap-1 border-white/25 bg-white/10 text-white">{status}</Badge>
+  if (!Icon) return <Badge variant="outline" className="gap-1 border-white/25 bg-white/10 text-white">حالة غير معروفة</Badge>
   return (
     <Badge variant="outline" className="gap-1 border-white/25 bg-white/10 text-white">
       <Icon className="size-3" aria-hidden="true" />
-      {STATUS_LABELS[status] ?? status}
+      {STATUS_LABELS[status] ?? 'حالة غير معروفة'}
     </Badge>
   )
 }
 
 export function IncidentHero({ incident }: { incident: IncidentDetail }) {
-  const images = incident.media.filter((m) => m.mediaType === 'IMAGE')
-  const videos = incident.media.filter((m) => m.mediaType === 'VIDEO')
-
   const stats = [
     { icon: FileStack, label: 'إجمالي المرفقات', value: String(incident.media.length) },
-    { icon: Images, label: 'الصور', value: String(images.length) },
-    { icon: Video, label: 'الفيديو', value: String(videos.length) },
+    { icon: Images, label: 'الصور', value: String(incident.media.length) },
     { icon: Clock3, label: 'آخر تحديث', value: formatRelative(incident.updatedAt) },
   ]
 
@@ -77,7 +73,7 @@ export function IncidentHero({ incident }: { incident: IncidentDetail }) {
               </div>
             </div>
 
-            <dl className="grid shrink-0 grid-cols-2 gap-3 sm:grid-cols-4 lg:w-[26rem] lg:grid-cols-2">
+            <dl className="grid shrink-0 grid-cols-2 gap-3 sm:grid-cols-3 lg:w-[26rem] lg:grid-cols-2">
               {stats.map(({ icon: Icon, label, value }) => (
                 <div key={label} className="rounded-2xl border border-white/15 bg-white/10 p-3.5 backdrop-blur">
                   <dt className="flex items-center gap-1.5 text-xs font-medium text-[#b4c8e8]">

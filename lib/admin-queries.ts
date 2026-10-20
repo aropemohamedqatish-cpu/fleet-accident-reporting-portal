@@ -27,7 +27,6 @@ function buildWhere(filters: AdminFilters): Prisma.AccidentWhereInput {
   const and: Prisma.AccidentWhereInput[] = []
 
   if (filters.status !== 'ALL') and.push({ status: filters.status })
-
   const createdAt: { gte?: Date; lte?: Date } = {}
   if (filters.from) {
     const gte = new Date(`${filters.from}T00:00:00${DAMASCUS_OFFSET}`)
@@ -74,7 +73,13 @@ export async function getIncidents(filters: AdminFilters): Promise<IncidentRow[]
       createdAt: true,
       updatedAt: true,
       vehicle: { select: { plateNumber: true } },
-      _count: { select: { media: true } },
+      _count: {
+        select: {
+          media: {
+            where: { fileType: { in: ['image/jpeg', 'image/png', 'image/webp'] } },
+          },
+        },
+      },
     },
   })
   return rows.map((row) => ({
@@ -86,7 +91,6 @@ export async function getIncidents(filters: AdminFilters): Promise<IncidentRow[]
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     plateNumber: row.vehicle.plateNumber,
-    vehicleClass: row.vehicle.plateNumber.slice(0, 2),
     mediaCount: row._count.media,
   }))
 }
@@ -109,8 +113,9 @@ export async function getIncidentDetail(id: string): Promise<IncidentDetail | nu
       updatedAt: true,
       vehicle: { select: { plateNumber: true } },
       media: {
+        where: { fileType: { in: ['image/jpeg', 'image/png', 'image/webp'] } },
         orderBy: { createdAt: 'asc' },
-        select: { id: true, fileUrl: true, fileType: true, mediaType: true, fileSize: true },
+        select: { id: true, fileUrl: true, fileType: true, fileSize: true },
       },
     },
   })
@@ -133,19 +138,8 @@ export async function getIncidentDetail(id: string): Promise<IncidentDetail | nu
       id: m.id,
       fileUrl: m.fileUrl,
       fileType: m.fileType,
-      mediaType: m.mediaType,
       fileSize: m.fileSize,
     })),
-  }
-}
-
-export async function updateIncidentStatus(id: string, status: string): Promise<boolean> {
-  if (!isIncidentStatus(status)) return false
-  try {
-    await prisma.accident.update({ where: { id }, data: { status } })
-    return true
-  } catch {
-    return false
   }
 }
 
@@ -191,7 +185,9 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 
   const openWhere: Prisma.AccidentWhereInput = { status: { in: ['SUBMITTED', 'UNDER_REVIEW'] } }
   const referredWhere: Prisma.AccidentWhereInput = { status: { in: ['SENT_TO_INSURER', 'CLOSED'] } }
-  const noMediaWhere: Prisma.AccidentWhereInput = { media: { none: {} } }
+  const noMediaWhere: Prisma.AccidentWhereInput = {
+    media: { none: { fileType: { in: ['image/jpeg', 'image/png', 'image/webp'] } } },
+  }
 
   const [
     allTime,

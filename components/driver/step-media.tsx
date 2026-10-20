@@ -1,24 +1,15 @@
 'use client'
 
 import { useRef, useState, type DragEvent } from 'react'
-import { AlertCircle, Camera, ImagePlus, Trash2, UploadCloud, Video } from 'lucide-react'
+import { AlertCircle, Camera, ImagePlus, Trash2, UploadCloud } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import {
-  ALLOWED_MIME,
-  ALLOWED_VIDEO_MIME,
-  MAX_IMAGES,
-  MAX_IMAGE_FILE_SIZE,
-  MAX_VIDEO_FILE_SIZE,
-  sniffImageMime,
-  sniffVideoMime,
-} from '@/lib/validation'
+import { ALLOWED_MIME, MAX_IMAGES, MAX_IMAGE_FILE_SIZE, sniffImageMime } from '@/lib/validation'
 import type { MediaItem } from '@/lib/report-types'
 import { StepShell } from './step-shell'
 import { cn } from '@/lib/utils'
 
 type Props = {
   photos: MediaItem[]
-  videos: MediaItem[]
   onAdd: (items: MediaItem[]) => void
   onRemove: (id: string) => void
   onBack: () => void
@@ -29,16 +20,15 @@ function formatSize(bytes: number) {
   return bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.round(bytes / 1024)} KB`
 }
 
-export function StepMedia({ photos, videos, onAdd, onRemove, onBack, onNext }: Props) {
+export function StepMedia({ photos, onAdd, onRemove, onBack, onNext }: Props) {
   const cameraRef = useRef<HTMLInputElement>(null)
   const galleryRef = useRef<HTMLInputElement>(null)
-  const videoRef = useRef<HTMLInputElement>(null)
   const [errors, setErrors] = useState<string[]>([])
   const [dragging, setDragging] = useState(false)
   const remainingPhotos = MAX_IMAGES - photos.length
 
-  async function handleImages(files: File[]) {
-    const nextErrors: string[] = []
+  async function handleImages(files: File[], initialErrors: string[] = []) {
+    const nextErrors = [...initialErrors]
     const accepted: MediaItem[] = []
 
     if (files.length > remainingPhotos) {
@@ -62,52 +52,25 @@ export function StepMedia({ photos, videos, onAdd, onRemove, onBack, onNext }: P
     if (accepted.length) onAdd(accepted)
   }
 
-  async function handleVideo(file: File | undefined) {
-    if (!file) return
-    if (videos.length > 0) {
-      setErrors(['يمكنك إرفاق مقطع فيديو واحد فقط لكل بلاغ.'])
-      return
-    }
-    if (file.size === 0 || file.size > MAX_VIDEO_FILE_SIZE) {
-      setErrors(['يجب ألا يتجاوز حجم مقطع الفيديو 50MB.'])
-      return
-    }
-    const mime = await sniffVideoMime(file)
-    if (!mime || !ALLOWED_VIDEO_MIME.includes(mime)) {
-      setErrors(['صيغة الفيديو غير صالحة. الصيغ المسموحة: MP4, MOV, WebM.'])
-      return
-    }
-    setErrors([])
-    onAdd([{ id: crypto.randomUUID(), file, mime, kind: 'video', previewUrl: URL.createObjectURL(file) }])
-  }
-
   function onDrop(event: DragEvent<HTMLDivElement>) {
     event.preventDefault()
     setDragging(false)
     const files = Array.from(event.dataTransfer.files)
     const images = files.filter((file) => file.type.startsWith('image/'))
-    const video = files.find((file) => file.type.startsWith('video/'))
-    if (images.length) void handleImages(images)
-    if (video) void handleVideo(video)
-    if (images.length === 0 && !video) {
-      setErrors(['الملفات المرفقة غير مدعومة. أضف صوراً أو مقطع فيديو واحداً.'])
-    }
-    if (files.filter((file) => file.type.startsWith('video/')).length > 1) {
-      setErrors(['يمكنك إرفاق مقطع فيديو واحد فقط لكل بلاغ.'])
-    }
+    const errors = images.length !== files.length ? ['يُسمح بإرفاق الصور فقط.'] : []
+    if (images.length) void handleImages(images, errors)
+    else setErrors(errors.length ? errors : ['يُسمح بإرفاق الصور فقط.'])
   }
 
   const imageAccept = ALLOWED_MIME.join(',')
-  const videoAccept = ALLOWED_VIDEO_MIME.join(',')
-  const allMedia = [...photos, ...videos]
 
   return (
     <StepShell
-      title="صور وفيديو الحادث"
-      description="أرفق صوراً واضحة للأضرار، ويمكنك إضافة مقطع فيديو واحد لتوثيق الحادث."
+      title="صور الحادث"
+      description="أرفق صوراً واضحة للأضرار (حتى 10 صور، بحد أقصى 10MB للصورة)."
       onBack={onBack}
       onNext={onNext}
-      nextDisabled={allMedia.length === 0}
+      nextDisabled={photos.length === 0}
     >
       <div
         onDragOver={(event) => {
@@ -126,10 +89,9 @@ export function StepMedia({ photos, videos, onAdd, onRemove, onBack, onNext }: P
         </div>
         <div>
           <p className="font-semibold">أضف وسائط الحادث</p>
-         <p className="text-sm text-muted-foreground">
-  {`حتى ${MAX_IMAGES} صور (10MB للصورة) • ${photos.length}/${MAX_IMAGES} صور`}
-</p>
-
+          <p className="text-sm text-muted-foreground">
+            {`${photos.length}/${MAX_IMAGES} صور • 10MB كحد أقصى للصورة`}
+          </p>
         </div>
         <div className="grid w-full grid-cols-2 gap-3">
           <Button size="lg" className="h-12 gap-2" onClick={() => cameraRef.current?.click()} disabled={remainingPhotos === 0}>
@@ -141,16 +103,6 @@ export function StepMedia({ photos, videos, onAdd, onRemove, onBack, onNext }: P
             صور من المعرض
           </Button>
         </div>
-        {/* <Button
-          size="lg"
-          variant="outline"
-          className="h-12 w-full gap-2"
-          onClick={() => videoRef.current?.click()}
-          disabled={videos.length > 0}
-        >
-          <Video className="size-5" aria-hidden="true" />
-          {videos.length > 0 ? 'تم إرفاق فيديو' : 'إرفاق فيديو (اختياري)'}
-        </Button> */}
         <input
           ref={cameraRef}
           type="file"
@@ -177,18 +129,6 @@ export function StepMedia({ photos, videos, onAdd, onRemove, onBack, onNext }: P
             event.target.value = ''
           }}
         />
-        <input
-          ref={videoRef}
-          type="file"
-          accept={videoAccept}
-          className="sr-only"
-          tabIndex={-1}
-          aria-hidden="true"
-          onChange={(event) => {
-            void handleVideo(event.target.files?.[0])
-            event.target.value = ''
-          }}
-        />
       </div>
 
       {errors.length > 0 && (
@@ -202,33 +142,24 @@ export function StepMedia({ photos, videos, onAdd, onRemove, onBack, onNext }: P
         </div>
       )}
 
-      {allMedia.length > 0 && (
+      {photos.length > 0 && (
         <ul className="grid grid-cols-3 gap-3" aria-label="الوسائط المرفقة">
-          {allMedia.map((item, index) => (
+          {photos.map((item, index) => (
             <li key={item.id} className="group relative overflow-hidden rounded-xl border bg-muted">
-              {item.kind === 'image' ? (
-                // eslint-disable-next-line @next/next/no-img-element -- local blob preview
-                <img src={item.previewUrl} alt={`صورة الحادث ${index + 1}`} className="aspect-square w-full object-cover" />
-              ) : (
-                <video src={item.previewUrl} controls className="aspect-square w-full object-cover" aria-label="معاينة فيديو الحادث" />
-              )}
-              <span
-                className={cn(
-                  'absolute top-2 right-2 rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm',
-                  item.kind === 'video' ? 'bg-amber-100 text-amber-950' : 'bg-white/95 text-[#003366]',
-                )}
-              >
-                {item.kind === 'video' ? 'فيديو' : `صورة ${index + 1}`}
+              {/* eslint-disable-next-line @next/next/no-img-element -- local blob preview */}
+              <img src={item.previewUrl} alt={`صورة الحادث ${index + 1}`} className="aspect-square w-full object-cover" />
+              <span className="absolute top-2 right-2 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold text-[#003366] shadow-sm">
+                صورة {index + 1}
               </span>
               <div className="absolute inset-x-0 bottom-0 bg-foreground/70 px-1.5 py-0.5 text-[10px] text-background" dir="ltr">
-                {`${item.kind === 'video' ? 'VIDEO • ' : ''}${formatSize(item.file.size)}`}
+                {formatSize(item.file.size)}
               </div>
               <Button
                 size="icon"
                 variant="destructive"
                 className="absolute top-1.5 left-1.5 size-11 rounded-full shadow"
                 onClick={() => onRemove(item.id)}
-                aria-label={`حذف ${item.kind === 'video' ? 'الفيديو' : `الصورة ${index + 1}`}`}
+                aria-label={`حذف الصورة ${index + 1}`}
               >
                 <Trash2 className="size-4" aria-hidden="true" />
               </Button>

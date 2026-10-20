@@ -1,48 +1,36 @@
 'use client'
 
-import { useState, type KeyboardEvent } from 'react'
-import { ChevronLeft, FileSearch, ImageOff, Loader2, Paperclip, TriangleAlert } from 'lucide-react'
+import { useState, useTransition, type KeyboardEvent } from 'react'
+import { useRouter } from 'next/navigation'
+import { ChevronLeft, FileSearch, ImageOff, Loader2, Paperclip } from 'lucide-react'
 import { PlateBadge } from '@/components/brand/plate'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { StatusBadge } from './status-badge'
-import { IncidentDrawer, useIncidentDrawer } from './incident-drawer'
 import {
-  VEHICLE_CLASS_LABELS,
   formatDateTime,
   formatNumber,
   formatRelative,
   shortRef,
-  type IncidentDetail,
   type IncidentRow,
 } from '@/lib/admin-claims'
 import { cn } from '@/lib/utils'
 
 export function ClaimsTable({ rows, total }: { rows: IncidentRow[]; total: number }) {
-  const { selected, setSelected, close } = useIncidentDrawer()
-  const [loadingId, setLoadingId] = useState<string | null>(null)
-  const [loadError, setLoadError] = useState<string | null>(null)
+  const router = useRouter()
+  const [pending, startTransition] = useTransition()
+  const [navigatingId, setNavigatingId] = useState<string | null>(null)
 
-  async function openDetail(id: string) {
-    setLoadingId(id)
-    setLoadError(null)
-    try {
-      const res = await fetch(`/api/admin/incidents/${id}`, { cache: 'no-store' })
-      if (!res.ok) throw new Error('load failed')
-      const detail = (await res.json()) as IncidentDetail
-      setSelected(detail)
-    } catch {
-      setLoadError('تعذّر تحميل تفاصيل البلاغ. يرجى المحاولة مجدداً.')
-    } finally {
-      setLoadingId(null)
-    }
+  function openDetail(id: string) {
+    setNavigatingId(id)
+    startTransition(() => router.push(`/admin/incidents/${encodeURIComponent(id)}`))
   }
 
   function onRowKey(event: KeyboardEvent, id: string) {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
-      void openDetail(id)
+      openDetail(id)
     }
   }
 
@@ -52,7 +40,7 @@ export function ClaimsTable({ rows, total }: { rows: IncidentRow[]; total: numbe
         <CardHeader className="flex-col gap-3 border-b border-border sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle className="text-xl">سجل البلاغات</CardTitle>
-            <p className="mt-1 text-sm font-medium text-muted-foreground">اضغط على أي بلاغ لعرض التفاصيل الكاملة وصور الحادث والفيديو المرفق.</p>
+            <p className="mt-1 text-sm font-medium text-muted-foreground">اضغط على أي بلاغ لفتح صفحته وتفاصيله الكاملة ومرفقاته.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="secondary" className="h-8 px-3.5 text-sm tabular-nums">
@@ -65,16 +53,6 @@ export function ClaimsTable({ rows, total }: { rows: IncidentRow[]; total: numbe
         </CardHeader>
 
         <CardContent className="p-0 sm:p-0">
-          {loadError && (
-            <p
-              role="alert"
-              className="flex items-center gap-2.5 border-b border-[#f3b9b3] bg-danger-soft px-6 py-3.5 text-sm font-bold text-[#7a1a12]"
-            >
-              <TriangleAlert className="size-4 shrink-0" aria-hidden="true" />
-              {loadError}
-            </p>
-          )}
-
           {rows.length === 0 ? (
             <div className="px-6 py-16 text-center">
               <span className="mx-auto flex size-16 items-center justify-center rounded-3xl bg-secondary text-brand">
@@ -92,7 +70,6 @@ export function ClaimsTable({ rows, total }: { rows: IncidentRow[]; total: numbe
                     <TableRow>
                       <TableHead>المرجع</TableHead>
                       <TableHead>رقم اللوحة</TableHead>
-                      <TableHead>فئة المركبة</TableHead>
                       <TableHead>السائق</TableHead>
                       <TableHead>وقت التسجيل</TableHead>
                       <TableHead>المرفقات</TableHead>
@@ -120,7 +97,6 @@ export function ClaimsTable({ rows, total }: { rows: IncidentRow[]; total: numbe
                         <TableCell>
                           <PlateBadge plate={row.plateNumber} size="sm" />
                         </TableCell>
-                        <TableCell className="text-sm font-semibold text-ink-soft">{VEHICLE_CLASS_LABELS[row.vehicleClass]}</TableCell>
                         <TableCell>
                           <p className="font-bold text-ink">{row.reporterName}</p>
                           <p dir="ltr" className="mt-0.5 text-start font-mono text-xs font-medium text-ink-soft">
@@ -140,7 +116,7 @@ export function ClaimsTable({ rows, total }: { rows: IncidentRow[]; total: numbe
                           <StatusBadge status={row.status} />
                         </TableCell>
                         <TableCell>
-                          {loadingId === row.id ? (
+                          {pending && navigatingId === row.id ? (
                             <Loader2 className="size-5 animate-spin text-brand" aria-label="جارٍ التحميل" />
                           ) : (
                             <ChevronLeft
@@ -167,7 +143,7 @@ export function ClaimsTable({ rows, total }: { rows: IncidentRow[]; total: numbe
                     >
                       <span className="flex items-center justify-between gap-3">
                         <PlateBadge plate={row.plateNumber} size="md" />
-                        {loadingId === row.id ? (
+                        {pending && navigatingId === row.id ? (
                           <Loader2 className="size-5 animate-spin text-brand" aria-label="جارٍ التحميل" />
                         ) : (
                           <StatusBadge status={row.status} />
@@ -190,7 +166,6 @@ export function ClaimsTable({ rows, total }: { rows: IncidentRow[]; total: numbe
                         </span>
                       </span>
                       <span className="flex items-center justify-between gap-3 text-sm font-semibold text-ink-soft">
-                        <span>{VEHICLE_CLASS_LABELS[row.vehicleClass]}</span>
                         <Attachments count={row.mediaCount} />
                       </span>
                     </button>
@@ -201,7 +176,6 @@ export function ClaimsTable({ rows, total }: { rows: IncidentRow[]; total: numbe
           )}
         </CardContent>
       </Card>
-      <IncidentDrawer incident={selected} onClose={close} />
     </>
   )
 }

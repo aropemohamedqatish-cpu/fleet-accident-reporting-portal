@@ -34,7 +34,7 @@ export default async function ConsoleLayout({ children }: Readonly<{ children: R
 
         <p className="relative px-8 pb-3 text-[11px] font-bold tracking-wider text-[#9fb6d9]">القائمة الرئيسية</p>
         <div className="relative flex-1 overflow-y-auto">
-          <SidebarNav />
+          <SidebarNav role={session.role} />
         </div>
 
         <div className="relative space-y-3 p-4">
@@ -89,7 +89,7 @@ export default async function ConsoleLayout({ children }: Readonly<{ children: R
         <main className="mx-auto w-full max-w-[1500px] px-4 pt-6 pb-32 sm:px-6 lg:px-3 lg:pt-3 lg:pb-12">{children}</main>
       </div>
 
-      <TabBarNav />
+      <TabBarNav role={session.role} />
     </div>
   )
 }

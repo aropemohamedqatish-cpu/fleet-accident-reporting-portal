@@ -8,11 +8,6 @@ datasource db {
   provider = "postgresql"
 }
 
-enum MediaType {
-  IMAGE
-  VIDEO
-}
-
 enum AdminRole {
   AGENT
   ADMIN
@@ -45,6 +40,11 @@ model Accident {
   updatedAt           DateTime       @updatedAt
   
   media               AccidentMedia[]
+  assignedToId        String?
+  assignedTo          AdminUser?      @relation("AccidentAssignment", fields: [assignedToId], references: [id], onDelete: SetNull)
+  auditLogs           AuditLog[]
+
+  @@index([assignedToId])
 }
 
 model AccidentMedia {
@@ -54,7 +54,6 @@ model AccidentMedia {
   
   fileUrl      String   
   fileType     String   
-  mediaType    MediaType @default(IMAGE)
   fileSize     Int      
   createdAt    DateTime @default(now())
 }
@@ -66,4 +65,23 @@ model AdminUser {
   name         String
   role         AdminRole @default(AGENT)
   createdAt    DateTime  @default(now())
+
+  assignedAccidents Accident[] @relation("AccidentAssignment")
+  auditLogs         AuditLog[]
+}
+
+model AuditLog {
+  id         String     @id @default(uuid())
+  userId     String
+  user       AdminUser  @relation(fields: [userId], references: [id], onDelete: Restrict)
+  accidentId String
+  accident   Accident   @relation(fields: [accidentId], references: [id], onDelete: Restrict)
+  actionType String
+  details    String
+  ipAddress  String
+  createdAt  DateTime   @default(now())
+
+  @@index([userId])
+  @@index([accidentId])
+  @@index([createdAt])
 }

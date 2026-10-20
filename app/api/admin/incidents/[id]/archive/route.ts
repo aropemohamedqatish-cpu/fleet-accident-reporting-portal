@@ -12,9 +12,6 @@ const EXT_BY_MIME: Record<string, string> = {
   'image/jpeg': '.jpg',
   'image/png': '.png',
   'image/webp': '.webp',
-  'video/mp4': '.mp4',
-  'video/quicktime': '.mov',
-  'video/webm': '.webm',
 }
 
 export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
@@ -56,8 +53,9 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
     let index = 0
     for (const m of incident.media) {
       index += 1
-      const ext = EXT_BY_MIME[m.fileType] ?? (m.mediaType === 'VIDEO' ? '.mp4' : '.jpg')
-      const name = `${m.mediaType === 'VIDEO' ? 'video' : 'image'}-${String(index).padStart(2, '0')}${ext}`
+      const ext = EXT_BY_MIME[m.fileType]
+      if (!ext) continue
+      const name = `image-${String(index).padStart(2, '0')}${ext}`
       const relative = m.fileUrl.startsWith('/') ? m.fileUrl.slice(1) : m.fileUrl
       const diskPath = path.join(process.cwd(), 'public', relative)
       try {

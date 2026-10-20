@@ -16,7 +16,7 @@ const TONES: Record<Tone, { accent: string; tile: string }> = {
 
 export function StatsGrid({ stats }: { stats: DashboardStats }) {
   return (
-    <section aria-label="مؤشرات المطالبات" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <section aria-label="مؤشرات الحوادث" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <StatCard
         index={0}
         title="إجمالي البلاغات"

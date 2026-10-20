@@ -21,7 +21,7 @@ export function StatusBadge({ status, className }: { status: string; className?:
   if (!isIncidentStatus(status)) {
     return (
       <span className={cn('inline-flex h-7 items-center rounded-full border border-input bg-white px-3 text-xs font-bold text-ink', className)}>
-        {status}
+        حالة غير معروفة
       </span>
     )
   }

@@ -8,6 +8,7 @@ import { prisma } from '@/lib/prisma'
 const STATUS_LABELS: Record<string, string> = {
   SUBMITTED: 'جديد',
   UNDER_REVIEW: 'قيد المراجعة',
+  SENT_TO_INSURER: 'تمت الإحالة',
   CLOSED: 'مغلق',
 }
 
@@ -34,7 +35,13 @@ export default async function DashboardPage() {
         status: true,
         createdAt: true,
         vehicle: { select: { plateNumber: true } },
-        _count: { select: { media: true } },
+        _count: {
+          select: {
+            media: {
+              where: { fileType: { in: ['image/jpeg', 'image/png', 'image/webp'] } },
+            },
+          },
+        },
       },
     }),
   ])
@@ -173,5 +180,5 @@ function StatusBadge({ status }: { status: string }) {
   if (status === 'CLOSED') {
     return <Badge variant="outline" className="gap-1 border-green-200 bg-green-50 text-green-900"><CheckCircle2 className="size-3" aria-hidden="true" />مغلق</Badge>
   }
-  return <Badge variant="outline">{status}</Badge>
+  return <Badge variant="outline">{STATUS_LABELS[status] ?? 'حالة غير معروفة'}</Badge>
 }

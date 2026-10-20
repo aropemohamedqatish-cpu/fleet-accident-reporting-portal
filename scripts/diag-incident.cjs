@@ -54,12 +54,15 @@ const pg = require("pg");
       out.checks.accident_idempotency_probe = "FAIL: " + e.message;
     }
 
-    // 5. try AccidentMedia mediaType column
+    // 5. inspect the media table after the image-only schema migration
     try {
-      const { rows } = await pool.query('SELECT "mediaType" FROM "AccidentMedia" LIMIT 1');
-      out.checks.media_mediatype_probe = "OK rows=" + rows.length;
+      const { rows } = await pool.query(
+        'SELECT "fileType" FROM "AccidentMedia" WHERE "fileType" LIKE $1 LIMIT 1',
+        ["image/%"]
+      );
+      out.checks.image_media_probe = "OK rows=" + rows.length;
     } catch (e) {
-      out.checks.media_mediatype_probe = "FAIL: " + e.message;
+      out.checks.image_media_probe = "FAIL: " + e.message;
     }
 
     // 6. uploads dir writable?

@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 import type { Vehicle } from '@/lib/fleet-data'
 import type { LocationData, SubmissionOutcome } from '@/lib/report-types'
 import type { ReporterData } from '@/lib/validation'
+import { buildIncidentWhatsAppUrl, INCIDENT_SUPERVISORS } from '@/lib/incident-whatsapp'
 
 type Props = {
   outcome: SubmissionOutcome
@@ -15,39 +16,19 @@ type Props = {
   location: LocationData
   reporter: ReporterData
   photoCount: number
-  videoCount: number
   onNewReport: () => void
 }
 
-function buildWhatsAppText({ outcome, vehicle, location, reporter, photoCount, videoCount }: Omit<Props, 'onNewReport'>) {
-  const locationText =
-    location.mode === 'gps'
-      ? `https://maps.google.com/?q=${location.lat.toFixed(6)},${location.lng.toFixed(6)}`
-      : location.description
-  return [
-    '*بلاغ حادث مركبة — آروب سورية*',
-    `رقم البلاغ: ${outcome.ticketId}`,
-    `رقم اللوحة: ${vehicle.plate}`,
-    `المركبة: ${vehicle.make} ${vehicle.model} ${vehicle.year}`,
-    `رقم الوثيقة: ${vehicle.policyNumber}`,
-    `اسم السائق: ${reporter.fullName}`,
-    `رقم الجوال: ${reporter.mobile}`,
-    `موقع الحادث: ${locationText}`,
-    `عدد الصور المرفقة: ${photoCount}`,
-    `عدد مقاطع الفيديو المرفقة: ${videoCount}`,
-    `وصف الحادث: ${reporter.notes}`,
-    `تاريخ البلاغ: ${new Date(outcome.submittedAt).toLocaleString('ar-SY')}`,
-  ].join('\n')
-}
-
 export function SuccessScreen(props: Props) {
-  const { outcome, vehicle, onNewReport } = props
+  const { outcome, vehicle, location, reporter, photoCount, onNewReport } = props
   const [copied, setCopied] = useState(false)
   const staged = outcome.status === 'staged'
   const shortId = outcome.ticketId.slice(0, 8).toUpperCase()
   const submissionHour = new Date(outcome.submittedAt).getHours()
   const isLateNight = submissionHour >= 20 || submissionHour < 8
-  const whatsappHref = `https://wa.me/?text=${encodeURIComponent(buildWhatsAppText(props))}`
+  const locationText = location.mode === 'gps'
+    ? `${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`
+    : location.description
 
   async function copyId() {
     try {
@@ -123,22 +104,61 @@ export function SuccessScreen(props: Props) {
             </dd>
           </div>
         </dl>
+        <dl className="mt-4 grid gap-3 border-t pt-4 text-sm">
+          <div>
+            <dt className="text-muted-foreground">اسم المبلّغ</dt>
+            <dd className="mt-1 font-semibold text-foreground">{reporter.fullName}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">رقم الجوال</dt>
+            <dd dir="ltr" className="mt-1 text-right font-mono font-semibold text-foreground">{reporter.mobile}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">{location.mode === 'gps' ? 'إحداثيات موقع الحادث' : 'مكان الحادث'}</dt>
+            <dd dir={location.mode === 'gps' ? 'ltr' : 'auto'} className="mt-1 break-words font-semibold text-foreground">{locationText}</dd>
+            {location.mode === 'gps' && (
+              <a
+                href={`https://www.google.com/maps?q=${location.lat},${location.lng}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1 inline-block font-semibold text-[#003366] underline underline-offset-2"
+              >
+                فتح الموقع على الخريطة
+              </a>
+            )}
+          </div>
+          <div>
+            <dt className="text-muted-foreground">تفاصيل الحادث</dt>
+            <dd className="mt-1 whitespace-pre-wrap break-words font-medium leading-6 text-foreground">{reporter.notes}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">الصور المرفقة</dt>
+            <dd className="mt-1 font-semibold text-foreground">{photoCount} صور</dd>
+          </div>
+        </dl>
       </div>
 
       <div className="mt-auto flex flex-col gap-3">
         {!staged && (
-          <a
-            href={whatsappHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={cn(
-              buttonVariants({ size: 'lg' }),
-              'h-14 gap-2 bg-[#25D366] text-base font-semibold text-[#0b3d1f] hover:bg-[#25D366]/90',
-            )}
-          >
-            <MessageCircle className="size-5" aria-hidden="true" />
-            مشاركة البلاغ عبر واتساب
-          </a>
+          <>
+           
+            {INCIDENT_SUPERVISORS.map((supervisor) => (
+              <a
+                key={supervisor.phone}
+                href={buildIncidentWhatsAppUrl(supervisor.phone, props)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(
+                  buttonVariants({ size: 'lg' }),
+                  'h-14 gap-2 bg-[#25D366] text-base font-semibold text-[#0b3d1f] shadow-sm hover:bg-[#25D366]/90',
+                )}
+              >
+                <MessageCircle className="size-5" aria-hidden="true" />
+                مراسلة {supervisor.name} عبر واتساب
+                <span className="font-mono text-sm" dir="ltr">{supervisor.phone}</span>
+              </a>
+            ))}
+          </>
         )}
         <Button variant="outline" size="lg" className="h-12 gap-2" onClick={onNewReport}>
           <Plus className="size-4" aria-hidden="true" />
