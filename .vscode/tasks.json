@@ -23,6 +23,97 @@
 			],
 			"isBackground": false,
 			"problemMatcher": []
+		},
+		{
+			"label": "Verify global pnpm installation",
+			"type": "shell",
+			"command": "pnpm",
+			"args": [
+				"--version"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspect npm global pnpm install",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"root",
+				"-g"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Install pinned pnpm globally",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"install",
+				"--global",
+				"pnpm@12.3.4"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Enable pinned pnpm command",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"install",
+				"--global",
+				"--allow-scripts=pnpm",
+				"pnpm@12.3.4"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify pnpm command path",
+			"type": "shell",
+			"command": "C:\\Users\\MQATISH\\AppData\\Roaming\\npm\\pnpm.cmd",
+			"args": [
+				"--version"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Add npm global tools to user PATH",
+			"type": "shell",
+			"command": "powershell.exe",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"$npmBin = Join-Path $env:APPDATA 'npm'; $userPath = [Environment]::GetEnvironmentVariable('Path','User'); $parts = @($userPath -split ';' | Where-Object { $_ }); if (-not ($parts | Where-Object { $_.TrimEnd('\\') -ieq $npmBin.TrimEnd('\\') })) { $newPath = (@($parts) + $npmBin) -join ';'; [Environment]::SetEnvironmentVariable('Path',$newPath,'User'); Write-Output \"Added $npmBin to the user PATH. Open a new CMD window.\" } else { Write-Output \"$npmBin is already in the user PATH.\" }"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify global tools PATH",
+			"type": "shell",
+			"command": "powershell.exe",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Write-Output $env:APPDATA; [Environment]::GetEnvironmentVariable('Path','User')"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify seeded admin role safely",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"node_modules/tsx/dist/cli.mjs",
+				"scripts/verify-admin-role.ts"
+			],
+			"isBackground": false,
+			"problemMatcher": []
 		}
 	]
 }
