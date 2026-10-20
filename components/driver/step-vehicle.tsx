@@ -83,8 +83,6 @@ export function StepVehicle({ plate, onPlateChange, onBack, onNext }: Props) {
           <dl className="grid flex-1 grid-cols-2 gap-x-4 gap-y-1 text-sm">
             <dt className="text-muted-foreground">المركبة</dt>
             <dd className="font-semibold" dir="ltr">{`${vehicle.make} ${vehicle.model} ${vehicle.year}`}</dd>
-            <dt className="text-muted-foreground">الفئة</dt>
-            <dd className="font-semibold">{vehicle.category}</dd>
             <dt className="text-muted-foreground">رقم الوثيقة</dt>
             <dd className="font-semibold" dir="ltr">{vehicle.policyNumber}</dd>
           </dl>

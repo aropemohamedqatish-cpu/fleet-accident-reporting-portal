@@ -2,11 +2,11 @@
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useTransition } from 'react'
-import { CalendarDays, CarFront, ListFilter } from 'lucide-react'
+import { CalendarDays, ListFilter } from 'lucide-react'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { STATUS_LABELS, VEHICLE_CLASS_LABELS } from '@/lib/admin-claims'
+import { STATUS_LABELS } from '@/lib/admin-claims'
 
 export function ClaimsSelectFilters() {
   const router = useRouter()
@@ -15,11 +15,10 @@ export function ClaimsSelectFilters() {
   const [pending, startTransition] = useTransition()
 
   const status = searchParams.get('status') ?? 'ALL'
-  const prefix = searchParams.get('prefix') ?? 'ALL'
   const from = searchParams.get('from') ?? ''
   const to = searchParams.get('to') ?? ''
 
-  function setParam(key: string, value: string, fallback: string) {
+  function setParam(key: string, value: string | null, fallback: string) {
     const params = new URLSearchParams(searchParams.toString())
     if (!value || value === fallback) params.delete(key)
     else params.set(key, value)
@@ -30,10 +29,10 @@ export function ClaimsSelectFilters() {
     startTransition(() => router.replace(pathname, { scroll: false }))
   }
 
-  const hasActive = status !== 'ALL' || prefix !== 'ALL' || from !== '' || to !== ''
+  const hasActive = status !== 'ALL' || from !== '' || to !== ''
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <div className="space-y-1.5">
         <Label htmlFor="claims-status" className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
           <ListFilter className="size-3.5 text-[#003366]" aria-hidden="true" />
@@ -49,22 +48,6 @@ export function ClaimsSelectFilters() {
             <SelectItem value="UNDER_REVIEW">{STATUS_LABELS.UNDER_REVIEW}</SelectItem>
             <SelectItem value="SENT_TO_INSURER">{STATUS_LABELS.SENT_TO_INSURER}</SelectItem>
             <SelectItem value="CLOSED">{STATUS_LABELS.CLOSED}</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="claims-prefix" className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
-          <CarFront className="size-3.5 text-[#003366]" aria-hidden="true" />
-          فئة المركبة
-        </Label>
-        <Select value={prefix} onValueChange={(v) => setParam('prefix', v, 'ALL')} disabled={pending}>
-          <SelectTrigger id="claims-prefix" className="h-11 border-slate-300 bg-white">
-            <SelectValue placeholder="كل الفئات" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">كل الفئات</SelectItem>
-            <SelectItem value="12">{VEHICLE_CLASS_LABELS.PASSENGER}</SelectItem>
-            <SelectItem value="61">{VEHICLE_CLASS_LABELS.TRANSPORT}</SelectItem>
           </SelectContent>
         </Select>
       </div>

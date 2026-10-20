@@ -10,7 +10,7 @@ export default async function DashboardLayout({ children }: Readonly<{ children:
   const session = await getSession()
   if (!session) redirect('/login')
 
-  const roleLabel = session.role === 'ADMIN' ? 'مدير النظام' : 'موظف مطالبات'
+  const roleLabel = session.role === 'ADMIN' ? 'مدير النظام' : 'موظف حوادث'
 
   return (
     <div className="flex min-h-dvh bg-[#f4f6fa] text-slate-900" dir="rtl">
@@ -59,7 +59,7 @@ export default async function DashboardLayout({ children }: Readonly<{ children:
           <div className="flex min-h-[76px] items-center justify-between gap-4 px-4 sm:px-6 xl:px-9">
             <div>
               <p className="text-xs font-medium text-slate-500">آروب سورية للتأمين</p>
-              <h1 className="mt-0.5 text-lg font-bold text-slate-900 sm:text-xl">لوحة تحكم المطالبات</h1>
+              <h1 className="mt-0.5 text-lg font-bold text-slate-900 sm:text-xl">لوحة تحكم الحوادث</h1>
             </div>
             <div className="flex items-center gap-3">
               <span className="hidden max-w-56 truncate text-sm text-slate-600 sm:block">{session.name}</span>

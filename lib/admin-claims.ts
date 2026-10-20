@@ -1,27 +1,27 @@
+export { formatDateTime, formatDate, formatRelative, formatNumber } from './brand'
+
 export const INCIDENT_STATUSES = ['SUBMITTED', 'UNDER_REVIEW', 'SENT_TO_INSURER', 'CLOSED'] as const
 export type IncidentStatus = (typeof INCIDENT_STATUSES)[number]
 
-export const STATUS_LABELS: Record<string, string> = {
-  SUBMITTED: 'جديد',
-  UNDER_REVIEW: 'قيد المعالجة',
-  SENT_TO_INSURER: 'تمت الإحالة',
-  CLOSED: 'مغلق',
+export type StatusTone = 'blue' | 'amber' | 'indigo' | 'green'
+
+export const STATUS_META: Record<IncidentStatus, { label: string; description: string; tone: StatusTone }> = {
+  SUBMITTED: { label: 'جديد', description: 'بلاغ مستلم بانتظار الفرز', tone: 'blue' },
+  UNDER_REVIEW: { label: 'قيد المعالجة', description: 'فريق الحوادث يراجع التفاصيل', tone: 'amber' },
+  SENT_TO_INSURER: { label: 'تمت الإحالة', description: 'أُحيل الملف إلى شركة التأمين', tone: 'indigo' },
+  CLOSED: { label: 'مغلق', description: 'اكتملت معالجة الحادث', tone: 'green' },
 }
 
-export type VehicleClass = 'PASSENGER' | 'TRANSPORT'
+export const STATUS_LABELS: Record<string, string> = Object.fromEntries(
+  INCIDENT_STATUSES.map((status) => [status, STATUS_META[status].label]),
+)
 
-export function vehicleClassOf(plate: string): VehicleClass {
-  return plate.startsWith('61') ? 'TRANSPORT' : 'PASSENGER'
-}
-
-export const VEHICLE_CLASS_LABELS: Record<VehicleClass, string> = {
-  PASSENGER: 'سياحية خاصة',
-  TRANSPORT: 'نقل خاص / شاحنة',
+export function isIncidentStatus(value: string): value is IncidentStatus {
+  return (INCIDENT_STATUSES as readonly string[]).includes(value)
 }
 
 export type AdminFilters = {
   status: IncidentStatus | 'ALL'
-  prefix: 'ALL' | '12' | '61'
   from: string
   to: string
   search: string
@@ -29,7 +29,6 @@ export type AdminFilters = {
 
 export const DEFAULT_FILTERS: AdminFilters = {
   status: 'ALL',
-  prefix: 'ALL',
   from: '',
   to: '',
   search: '',
@@ -44,7 +43,6 @@ export type IncidentRow = {
   createdAt: Date
   updatedAt: Date
   plateNumber: string
-  vehicleClass: VehicleClass
   mediaCount: number
 }
 
@@ -69,23 +67,24 @@ export type Delta = {
   direction: 'up' | 'down' | 'neutral'
 }
 
+export type TrendPoint = { key: string; label: string; count: number }
+
 export type DashboardStats = {
+  /** Every incident ever recorded. */
+  allTime: number
+  /** Incidents in the last 30 days. */
   total: number
   pending: number
   referred: number
-  failedNotifications: number
+  /** Incidents without any attachment — need urgent verification. */
+  missingMedia: number
   totalDelta: Delta
   pendingDelta: Delta
   referredDelta: Delta
-  failedDelta: Delta
-}
-
-export function formatDateTime(date: Date) {
-  return new Intl.DateTimeFormat('ar-SY', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-    timeZone: 'Asia/Damascus',
-  }).format(date)
+  missingMediaDelta: Delta
+  statusBreakdown: Record<IncidentStatus, number>
+  /** Daily incident counts for the last 14 days (Damascus time), oldest first. */
+  trend: TrendPoint[]
 }
 
 export function formatFileSize(bytes: number) {
@@ -101,4 +100,9 @@ export function mapLink(lat: number, lng: number) {
 
 export function shortRef(id: string) {
   return id.slice(0, 8).toUpperCase()
+}
+
+export function initialsOf(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  return (parts[0]?.[0] ?? '') + (parts.length > 1 ? (parts[1]?.[0] ?? '') : '')
 }

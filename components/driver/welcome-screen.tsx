@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 const POINTS = [
   { icon: ListChecks, title: 'خطوات بسيطة وواضحة', text: 'أربع خطوات فقط لإتمام البلاغ خلال دقائق.' },
   { icon: WifiOff, title: 'يعمل دون إنترنت', text: 'يُحفظ البلاغ على جهازك ويُرسل عند عودة الاتصال.' },
-  { icon: ShieldCheck, title: 'بياناتك محمية', text: 'تُرسل المعلومات بشكل مشفّر إلى فريق المطالبات فقط.' },
+  { icon: ShieldCheck, title: 'بياناتك محمية', text: 'تُرسل المعلومات بشكل مشفّر إلى فريق الحوادث فقط.' },
 ]
 
 export function WelcomeScreen({ onStart }: { onStart: () => void }) {
@@ -27,7 +27,7 @@ export function WelcomeScreen({ onStart }: { onStart: () => void }) {
           <p className="text-sm font-medium text-slate-600">بوابة حوادث الأسطول</p>
           <h1 className="text-balance text-3xl font-bold leading-tight">الإبلاغ عن حادث مركبة</h1>
           <p className="text-pretty leading-relaxed text-slate-600">
-            حافظ على هدوئك. سنرشدك خطوة بخطوة لتوثيق الحادث وإرساله مباشرة إلى فريق المطالبات.
+            حافظ على هدوئك. سنرشدك خطوة بخطوة لتوثيق الحادث وإرساله مباشرة إلى فريق الحوادث.
           </p>
         </div>
 

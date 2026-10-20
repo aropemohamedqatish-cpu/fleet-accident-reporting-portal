@@ -68,7 +68,7 @@ export function StepLocation({ location, manualText, onManualTextChange, onLocat
   return (
     <StepShell
       title="موقع الحادث"
-      description="نحتاج إلى موقع الحادث لإرسال المساعدة وتوثيق المطالبة بدقة."
+      description="نحتاج إلى موقع الحادث لإرسال المساعدة وتوثيق الحادث بدقة."
       onBack={onBack}
       onNext={handleNext}
       nextDisabled={!canContinue}

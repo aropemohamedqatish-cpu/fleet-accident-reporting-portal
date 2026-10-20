@@ -23,7 +23,7 @@ export function LoginForm() {
           priority
           className="mx-auto mb-2 h-14 w-auto"
         />
-        <CardTitle className="text-2xl font-bold text-slate-900">بوابة المطالبات</CardTitle>
+        <CardTitle className="text-2xl font-bold text-slate-900">بوابة الحوادث</CardTitle>
         <CardDescription className="text-slate-600">سجّل الدخول للوصول إلى لوحة متابعة البلاغات.</CardDescription>
       </CardHeader>
       <CardContent>

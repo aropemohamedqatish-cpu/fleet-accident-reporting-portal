@@ -54,7 +54,7 @@ export function StepDetails({ values, onChange, onBack, onSubmit, submitting, on
   return (
     <StepShell
       title="بيانات السائق"
-      description="راجع بياناتك قبل الإرسال. سيتواصل معك فريق المطالبات على الرقم المدخل."
+      description="راجع بياناتك قبل الإرسال. سيتواصل معك فريق الحوادث على الرقم المدخل."
       onBack={onBack}
       onNext={handleSubmit}
       nextLabel={online ? 'إرسال البلاغ' : 'حفظ البلاغ للإرسال لاحقاً'}

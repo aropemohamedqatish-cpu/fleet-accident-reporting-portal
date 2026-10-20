@@ -1,0 +1,180 @@
+{
+  "startedAt": "2026-10-19T12:23:06.360Z",
+  "checks": {
+    "tables": [
+      "Accident",
+      "AccidentMedia",
+      "AdminUser",
+      "Vehicle"
+    ],
+    "columns_Vehicle": [
+      {
+        "column_name": "id",
+        "data_type": "text"
+      },
+      {
+        "column_name": "plateNumber",
+        "data_type": "text"
+      },
+      {
+        "column_name": "isActive",
+        "data_type": "boolean"
+      },
+      {
+        "column_name": "createdAt",
+        "data_type": "timestamp without time zone"
+      }
+    ],
+    "columns_Accident": [
+      {
+        "column_name": "id",
+        "data_type": "text"
+      },
+      {
+        "column_name": "idempotencyKey",
+        "data_type": "text"
+      },
+      {
+        "column_name": "vehicleId",
+        "data_type": "text"
+      },
+      {
+        "column_name": "reporterName",
+        "data_type": "text"
+      },
+      {
+        "column_name": "reporterPhone",
+        "data_type": "text"
+      },
+      {
+        "column_name": "locationDescription",
+        "data_type": "text"
+      },
+      {
+        "column_name": "latitude",
+        "data_type": "double precision"
+      },
+      {
+        "column_name": "longitude",
+        "data_type": "double precision"
+      },
+      {
+        "column_name": "notes",
+        "data_type": "text"
+      },
+      {
+        "column_name": "status",
+        "data_type": "text"
+      },
+      {
+        "column_name": "createdAt",
+        "data_type": "timestamp without time zone"
+      },
+      {
+        "column_name": "updatedAt",
+        "data_type": "timestamp without time zone"
+      },
+      {
+        "column_name": "requestHash",
+        "data_type": "text"
+      }
+    ],
+    "columns_AccidentMedia": [
+      {
+        "column_name": "id",
+        "data_type": "text"
+      },
+      {
+        "column_name": "accidentId",
+        "data_type": "text"
+      },
+      {
+        "column_name": "fileUrl",
+        "data_type": "text"
+      },
+      {
+        "column_name": "fileType",
+        "data_type": "text"
+      },
+      {
+        "column_name": "fileSize",
+        "data_type": "integer"
+      },
+      {
+        "column_name": "createdAt",
+        "data_type": "timestamp without time zone"
+      },
+      {
+        "column_name": "mediaType",
+        "data_type": "USER-DEFINED"
+      }
+    ],
+    "columns_AdminUser": [
+      {
+        "column_name": "id",
+        "data_type": "text"
+      },
+      {
+        "column_name": "email",
+        "data_type": "text"
+      },
+      {
+        "column_name": "passwordHash",
+        "data_type": "text"
+      },
+      {
+        "column_name": "name",
+        "data_type": "text"
+      },
+      {
+        "column_name": "role",
+        "data_type": "USER-DEFINED"
+      },
+      {
+        "column_name": "createdAt",
+        "data_type": "timestamp without time zone"
+      }
+    ],
+    "vehicleCount": 800,
+    "vehicleSample": [
+      {
+        "plateNumber": "1200001",
+        "isActive": true
+      },
+      {
+        "plateNumber": "1200002",
+        "isActive": true
+      },
+      {
+        "plateNumber": "1200003",
+        "isActive": true
+      },
+      {
+        "plateNumber": "1200004",
+        "isActive": true
+      },
+      {
+        "plateNumber": "1200005",
+        "isActive": true
+      }
+    ],
+    "vehicleLookup": [
+      {
+        "plateNumber": "1200001",
+        "isActive": true
+      },
+      {
+        "plateNumber": "1200002",
+        "isActive": true
+      },
+      {
+        "plateNumber": "6100200",
+        "isActive": true
+      }
+    ],
+    "accident_idempotency_probe": "OK rows=0",
+    "media_mediatype_probe": "OK rows=0",
+    "uploadsWritable": true
+  },
+  "ok": true
+}

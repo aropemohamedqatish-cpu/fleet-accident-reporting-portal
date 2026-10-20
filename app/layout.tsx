@@ -1,6 +1,6 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
-import { IBM_Plex_Sans_Arabic } from 'next/font/google'
+import { IBM_Plex_Mono, IBM_Plex_Sans_Arabic } from 'next/font/google'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
@@ -12,11 +12,20 @@ const plexArabic = IBM_Plex_Sans_Arabic({
   preload: true,
 })
 
+const plexMono = IBM_Plex_Mono({
+  subsets: ['latin'],
+  weight: ['500', '600', '700'],
+  variable: '--font-plex-mono',
+  display: 'swap',
+})
+
 export const metadata: Metadata = {
-  title: 'AROPE Syria | Fleet Accident Reporting Portal',
+  title: {
+    default: 'آروب سورية | بوابة حوادث الأسطول',
+    template: '%s | آروب سورية',
+  },
   description:
-    'بوابة الإبلاغ عن حوادث الأسطول - آروب سورية للتأمين. Secure fleet accident reporting and claims management.',
-  generator: 'v0.app',
+    'بوابة الإبلاغ عن حوادث الأسطول ومنصة إدارة الحوادث — آروب سورية للتأمين. إبلاغ سريع وآمن يعمل حتى دون اتصال.',
   applicationName: 'AROPE Fleet Reporting',
   icons: {
     icon: [
@@ -29,9 +38,11 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#1d4fa1',
+  themeColor: '#003366',
+  colorScheme: 'light',
   width: 'device-width',
   initialScale: 1,
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({
@@ -40,10 +51,10 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="ar" dir="rtl" className={`${plexArabic.variable} bg-slate-50`}>
-      <body className="min-h-dvh bg-slate-50 font-sans antialiased">
+    <html lang="ar" dir="rtl" className={`${plexArabic.variable} ${plexMono.variable}`}>
+      <body className="min-h-dvh font-sans text-ink antialiased">
         {children}
-        <Toaster position="top-center" richColors closeButton />
+        <Toaster />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

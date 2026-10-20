@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import { findVehicle, normalizePlate } from '@/lib/fleet-data'
 import { IncidentSubmissionError, stageReport, submitIncident } from '@/lib/offline-queue'
 import type { LocationData, MediaItem, SubmissionOutcome } from '@/lib/report-types'
-import type { IncidentPayload, ReporterData, ReporterInput } from '@/lib/validation'
+import type { AllowedMime, AllowedVideoMime, IncidentPayload, ReporterData, ReporterInput } from '@/lib/validation'
 import { useOutboxSync } from '@/hooks/use-outbox-sync'
 import { ConnectionBanner } from './connection-banner'
 import { WelcomeScreen } from './welcome-screen'
@@ -80,8 +80,8 @@ export function DriverPortal() {
       plate: normalizePlate(plate),
       location,
       reporter: data,
-      photos: photos.map((p) => ({ name: p.file.name, size: p.file.size, type: p.mime })),
-      videos: videos.map((video) => ({ name: video.file.name, size: video.file.size, type: video.mime })),
+      photos: photos.map((p) => ({ name: p.file.name, size: p.file.size, type: p.mime as AllowedMime })),
+      videos: videos.map((video) => ({ name: video.file.name, size: video.file.size, type: video.mime as AllowedVideoMime })),
       createdAt: new Date().toISOString(),
     }
     const files = [...photos, ...videos].map((item) => item.file)

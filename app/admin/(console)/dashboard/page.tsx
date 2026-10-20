@@ -8,7 +8,6 @@ import { DEFAULT_FILTERS, type AdminFilters } from '@/lib/admin-claims'
 import { getDashboardStats, getIncidents } from '@/lib/admin-queries'
 
 const VALID_STATUS = ['ALL', 'SUBMITTED', 'UNDER_REVIEW', 'SENT_TO_INSURER', 'CLOSED'] as const
-const VALID_PREFIX = ['ALL', '12', '61'] as const
 
 function parseFilters(params: Record<string, string | string[] | undefined>): AdminFilters {
   const pick = (k: string) => {
@@ -16,10 +15,8 @@ function parseFilters(params: Record<string, string | string[] | undefined>): Ad
     return typeof v === 'string' ? v : ''
   }
   const status = pick('status')
-  const prefix = pick('prefix')
   return {
     status: (VALID_STATUS as readonly string[]).includes(status) ? (status as AdminFilters['status']) : DEFAULT_FILTERS.status,
-    prefix: (VALID_PREFIX as readonly string[]).includes(prefix) ? (prefix as AdminFilters['prefix']) : DEFAULT_FILTERS.prefix,
     from: pick('from').slice(0, 10),
     to: pick('to').slice(0, 10),
     search: pick('search').slice(0, 100),
@@ -36,11 +33,11 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
         <div>
           <div className="inline-flex items-center gap-2 rounded-xl border border-[#003366]/15 bg-[#003366]/5 px-3 py-1 text-xs font-semibold text-[#003366]">
             <ShieldCheck className="size-3.5" aria-hidden="true" />
-            مركز عمليات المطالبات — آروب سورية
+            مركز عمليات الحوادث — آروب سورية
           </div>
-          <h1 className="mt-4 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">لوحة التحكم التنفيذية للمطالبات</h1>
+          <h1 className="mt-4 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">لوحة التحكم التنفيذية للحوادث</h1>
           <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-            راجع البلاغات الواردة، صَفّها حسب الأولوية، وعالج المطالبات بدقة وأمان من لوحة واحدة موحّدة.
+            راجع البلاغات الواردة، صَفّها حسب الأولوية، وعالج الحوادث بدقة وأمان من لوحة واحدة موحّدة.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-3">

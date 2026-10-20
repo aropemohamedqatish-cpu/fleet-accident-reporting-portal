@@ -14,7 +14,7 @@ const TONES: Record<string, { bg: string; text: string; border: string }> = {
 
 export function StatsGrid({ stats }: { stats: DashboardStats }) {
   return (
-    <section aria-label="مؤشرات المطالبات" className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+    <section aria-label="مؤشرات الحوادث" className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
       <StatCard
         title="إجمالي البلاغات"
         value={stats.total}
@@ -41,11 +41,11 @@ export function StatsGrid({ stats }: { stats: DashboardStats }) {
       />
       <StatCard
         title="مشاكل الإشعارات"
-        value={stats.failedNotifications}
+        value={stats.missingMedia}
         icon={BellRing}
         tone="rose"
         detail="بلاغات بدون أي مرفقات تحتاج مراجعة عاجلة"
-        delta={stats.failedDelta}
+        delta={stats.missingMediaDelta}
       />
     </section>
   )

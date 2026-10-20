@@ -1,23 +1,27 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { SESSION_COOKIE_NAME, verifySessionToken } from '@/lib/session-token'
 
+const ADMIN_LOGIN = '/admin/login'
+const ADMIN_HOME = '/admin/dashboard'
+
 export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  // Legacy entry points are folded into the single /admin console.
+  if (pathname === '/login') return NextResponse.redirect(new URL(ADMIN_LOGIN, request.url), 308)
+  if (pathname === '/dashboard' || pathname.startsWith('/dashboard/')) {
+    return NextResponse.redirect(new URL(ADMIN_HOME, request.url), 308)
+  }
+
   const token = request.cookies.get(SESSION_COOKIE_NAME)?.value
   const session = token ? await verifySessionToken(token) : null
-  const pathname = request.nextUrl.pathname
-  const isLogin = pathname === '/login' || pathname === '/admin/login'
-  const isAdminLogin = pathname === '/admin/login'
-  const isDashboard = !isLogin && (pathname.startsWith('/dashboard') || pathname.startsWith('/admin'))
+  const isLogin = pathname === ADMIN_LOGIN
 
-  if (isDashboard && !session) {
-    return NextResponse.redirect(new URL(pathname.startsWith('/admin') ? '/admin/login' : '/login', request.url))
-  }
-  if (isLogin && session) {
-    return NextResponse.redirect(new URL(isAdminLogin ? '/admin/dashboard' : '/dashboard', request.url))
-  }
+  if (!isLogin && !session) return NextResponse.redirect(new URL(ADMIN_LOGIN, request.url))
+  if (isLogin && session) return NextResponse.redirect(new URL(ADMIN_HOME, request.url))
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login', '/admin/:path*'],
+  matcher: ['/admin/:path*', '/dashboard/:path*', '/login'],
 }

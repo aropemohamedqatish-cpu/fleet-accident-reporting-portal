@@ -44,7 +44,7 @@ export default async function DashboardPage() {
       <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <p className="text-sm font-semibold text-[#003366]">مركز العمليات</p>
-          <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">نظرة عامة على المطالبات</h2>
+          <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">نظرة عامة على الحوادث</h2>
           <p className="mt-2 text-sm text-slate-600">تابع البلاغات الواردة وحالة معالجتها من مكان واحد.</p>
         </div>
         <div className="flex items-center gap-3">

@@ -126,9 +126,10 @@ export function StepMedia({ photos, videos, onAdd, onRemove, onBack, onNext }: P
         </div>
         <div>
           <p className="font-semibold">أضف وسائط الحادث</p>
-          <p className="text-sm text-muted-foreground">
-            {`حتى ${MAX_IMAGES} صور (10MB للصورة) • فيديو واحد حتى 50MB • ${photos.length}/${MAX_IMAGES} صور • ${videos.length}/1 فيديو`}
-          </p>
+         <p className="text-sm text-muted-foreground">
+  {`حتى ${MAX_IMAGES} صور (10MB للصورة) • ${photos.length}/${MAX_IMAGES} صور`}
+</p>
+
         </div>
         <div className="grid w-full grid-cols-2 gap-3">
           <Button size="lg" className="h-12 gap-2" onClick={() => cameraRef.current?.click()} disabled={remainingPhotos === 0}>
@@ -140,7 +141,7 @@ export function StepMedia({ photos, videos, onAdd, onRemove, onBack, onNext }: P
             صور من المعرض
           </Button>
         </div>
-        <Button
+        {/* <Button
           size="lg"
           variant="outline"
           className="h-12 w-full gap-2"
@@ -149,7 +150,7 @@ export function StepMedia({ photos, videos, onAdd, onRemove, onBack, onNext }: P
         >
           <Video className="size-5" aria-hidden="true" />
           {videos.length > 0 ? 'تم إرفاق فيديو' : 'إرفاق فيديو (اختياري)'}
-        </Button>
+        </Button> */}
         <input
           ref={cameraRef}
           type="file"

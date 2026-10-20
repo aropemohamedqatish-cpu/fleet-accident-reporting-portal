@@ -41,16 +41,16 @@ async function main() {
 
   console.log(`✅ تمت إضافة ${result.count} مركبة جديدة.`);
 
-  const passwordHash = await bcrypt.hash(adminPassword, 12);
+  const passwordHash = await bcrypt.hash(adminPassword!, 12);
   const admin = await prisma.adminUser.upsert({
-    where: { email: adminEmail },
+    where: { email: adminEmail! },
     update: {
       passwordHash,
       name: adminName,
       role: "ADMIN",
     },
     create: {
-      email: adminEmail,
+      email: adminEmail!,
       passwordHash,
       name: adminName,
       role: "ADMIN",

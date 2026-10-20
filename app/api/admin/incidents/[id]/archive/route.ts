@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 import JSZip from 'jszip'
 import { getSession } from '@/lib/auth'
 import { getIncidentDetail } from '@/lib/admin-queries'
-import { STATUS_LABELS, VEHICLE_CLASS_LABELS, formatDateTime, shortRef } from '@/lib/admin-claims'
+import { STATUS_LABELS, formatDateTime, shortRef } from '@/lib/admin-claims'
 
 export const runtime = 'nodejs'
 
@@ -37,7 +37,6 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
       `المرجع: ${ref}`,
       `المعرف الكامل: ${incident.id}`,
       `رقم اللوحة: ${incident.plateNumber}`,
-      `فئة المركبة: ${VEHICLE_CLASS_LABELS[incident.vehicleClass]}`,
       `الحالة: ${STATUS_LABELS[incident.status] ?? incident.status}`,
       `السائق: ${incident.reporterName}`,
       `الجوال: ${incident.reporterPhone}`,
