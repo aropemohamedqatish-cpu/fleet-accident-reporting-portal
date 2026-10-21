@@ -11,6 +11,16 @@ import {
 import { incidentPayloadSchema } from '../lib/validation'
 import { classifyLoginFailure, getLoginFailureMessage, getSafeLoginErrorLog } from '../lib/login-error'
 import { verifySessionToken } from '../lib/session-token'
+import { normalizeDigits, sanitizePlateInput } from '../lib/plate'
+import { getServerEnvironmentIssues } from '../lib/server-env'
+import { prisma } from '../lib/prisma'
+import { checkApiRateLimit } from '../lib/api-rate-limit'
+
+test('plate input normalization handles Arabic digits without a local fleet cache', () => {
+  assert.equal(normalizeDigits('١٢٠٠١٤٥'), '1200145')
+  assert.equal(sanitizePlateInput('١٢-٠٠١٤٥'), '1200145')
+  assert.equal(sanitizePlateInput('1200145xyz'), '1200145')
+})
 
 test('incident validation accepts a valid payload and rejects invalid plate and empty media', () => {
   const validPayload = {
@@ -89,6 +99,39 @@ test('invalid session tokens are rejected when the signing secret is unavailable
   } finally {
     if (originalSecret === undefined) delete process.env.JWT_SECRET
     else process.env.JWT_SECRET = originalSecret
+  }
+})
+
+test('missing server configuration is reported without crashing app startup or Prisma module import', () => {
+  const originalDatabaseUrl = process.env.DATABASE_URL
+  const originalSecret = process.env.JWT_SECRET
+  delete process.env.DATABASE_URL
+  delete process.env.JWT_SECRET
+
+  try {
+    assert.deepEqual(getServerEnvironmentIssues(), [
+      'DATABASE_URL is missing.',
+      'JWT_SECRET is missing or shorter than 32 bytes.',
+    ])
+    assert.throws(() => prisma.vehicle, /DATABASE_URL is missing/)
+  } finally {
+    if (originalDatabaseUrl === undefined) delete process.env.DATABASE_URL
+    else process.env.DATABASE_URL = originalDatabaseUrl
+    if (originalSecret === undefined) delete process.env.JWT_SECRET
+    else process.env.JWT_SECRET = originalSecret
+  }
+})
+
+test('API rate limiter fails closed when a production request has no trusted client IP', async () => {
+  const originalEnvironment = process.env.NODE_ENV
+  process.env.NODE_ENV = 'production'
+  try {
+    await assert.rejects(
+      checkApiRateLimit(new Headers(), 'vehicle-verification'),
+      /Unable to determine the client IP address/,
+    )
+  } finally {
+    process.env.NODE_ENV = originalEnvironment
   }
 })
 

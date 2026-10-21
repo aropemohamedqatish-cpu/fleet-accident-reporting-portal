@@ -1,10 +1,10 @@
 import Image from 'next/image'
-import { ShieldCheck, WifiOff, ListChecks, Phone, ArrowLeft } from 'lucide-react'
+import { ShieldCheck, Database, ListChecks, Phone, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 const POINTS = [
   { icon: ListChecks, title: 'خطوات بسيطة وواضحة', text: 'أربع خطوات فقط لإتمام البلاغ خلال دقائق.' },
-  { icon: WifiOff, title: 'حفظ البلاغ عند انقطاع الاتصال', text: 'بعد فتح البوابة، يمكنك متابعة البلاغ دون اتصال؛ يُحفظ على جهازك ويُرسل عند عودة الاتصال.' },
+  { icon: Database, title: 'تحقق مباشر من المركبة', text: 'نتحقق من تسجيل المركبة وحالتها مباشرة قبل قبول البلاغ.' },
   { icon: ShieldCheck, title: 'بياناتك محمية', text: 'تُرسل المعلومات بشكل مشفّر إلى فريق الحوادث فقط.' },
 ]
 

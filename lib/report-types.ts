@@ -4,6 +4,10 @@ export type LocationData =
   | { mode: 'gps'; lat: number; lng: number; accuracy: number }
   | { mode: 'manual'; description: string }
 
+export type Vehicle = {
+  plate: string
+}
+
 export type MediaItem = {
   id: string
   file: File
@@ -13,6 +17,6 @@ export type MediaItem = {
 
 export type SubmissionOutcome = {
   ticketId: string
-  status: 'submitted' | 'staged'
+  status: 'submitted'
   submittedAt: string
 }

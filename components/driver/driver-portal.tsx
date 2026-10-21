@@ -3,12 +3,10 @@
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { toast } from 'sonner'
-import { findVehicle, normalizePlate } from '@/lib/fleet-data'
-import { IncidentSubmissionError, stageReport, submitIncident } from '@/lib/offline-queue'
-import type { LocationData, MediaItem, SubmissionOutcome } from '@/lib/report-types'
+import { IncidentSubmissionError, submitIncident } from '@/lib/incident-submission'
+import type { LocationData, MediaItem, SubmissionOutcome, Vehicle } from '@/lib/report-types'
 import type { IncidentPayload, ReporterData, ReporterInput } from '@/lib/validation'
-import { useOutboxSync } from '@/hooks/use-outbox-sync'
-import { ConnectionBanner } from './connection-banner'
+import { sanitizePlateInput } from '@/lib/plate'
 import { WelcomeScreen } from './welcome-screen'
 import { StepIndicator } from './step-indicator'
 import { StepVehicle } from './step-vehicle'
@@ -21,9 +19,9 @@ type Step = 0 | 1 | 2 | 3 | 4 | 5
 const EMPTY_REPORTER: ReporterInput = { fullName: '', mobile: '', notes: '' }
 
 export function DriverPortal() {
-  const { online, pending, failed, syncing, storageError, refresh, retry, discard } = useOutboxSync()
   const [step, setStep] = useState<Step>(0)
   const [plate, setPlate] = useState('')
+  const [vehicle, setVehicle] = useState<Vehicle | null>(null)
   const [location, setLocation] = useState<LocationData | null>(null)
   const [manualText, setManualText] = useState('')
   const [photos, setPhotos] = useState<MediaItem[]>([])
@@ -41,7 +39,6 @@ export function DriverPortal() {
     [],
   )
 
-  const vehicle = findVehicle(plate)
   const go = (s: Step) => {
     setStep(s)
     window.scrollTo({ top: 0 })
@@ -56,6 +53,7 @@ export function DriverPortal() {
   function resetReport() {
     photos.forEach((item) => URL.revokeObjectURL(item.previewUrl))
     setPlate('')
+    setVehicle(null)
     setLocation(null)
     setManualText('')
     setPhotos([])
@@ -73,7 +71,7 @@ export function DriverPortal() {
     idempotencyKey.current ??= crypto.randomUUID()
     const key = idempotencyKey.current
     const payload: IncidentPayload = {
-      plate: normalizePlate(plate),
+      plate: sanitizePlateInput(plate),
       location,
       reporter: data,
       photos: photos.map((photo) => ({ name: photo.file.name, size: photo.file.size, type: photo.mime })),
@@ -81,26 +79,13 @@ export function DriverPortal() {
     }
     const files = photos.map((photo) => photo.file)
 
-    const stageLocally = async () => {
-      await stageReport({ idempotencyKey: key, payload, files, stagedAt: payload.createdAt })
-      await refresh()
-      setSubmitted({ outcome: { ticketId: key, status: 'staged', submittedAt: payload.createdAt }, data })
-      go(5)
-    }
-
     try {
-      if (!navigator.onLine) {
-        await stageLocally()
-        return
-      }
       const res = await submitIncident(payload, key, files)
       const outcome: SubmissionOutcome = { ticketId: res.incidentId, status: 'submitted', submittedAt: payload.createdAt }
       setSubmitted({ outcome, data })
       go(5)
     } catch (err) {
-      if (err instanceof TypeError) {
-        await stageLocally()
-      } else if (err instanceof IncidentSubmissionError) {
+      if (err instanceof IncidentSubmissionError) {
         toast.error('تعذّر إرسال البلاغ', { description: err.message })
       } else {
         toast.error('تعذّر إرسال البلاغ', {
@@ -116,16 +101,6 @@ export function DriverPortal() {
   return (
     <div className="flex min-h-dvh justify-center bg-muted md:py-8">
       <main className="flex w-full max-w-md flex-col overflow-hidden bg-background md:rounded-3xl md:border md:shadow-xl">
-        <ConnectionBanner
-          online={online}
-          pending={pending}
-          failed={failed}
-          syncing={syncing}
-          storageError={storageError}
-          onRetry={(key) => void retry(key)}
-          onDiscard={(key) => void discard(key)}
-        />
-
         {step > 0 && (
           <header className="flex items-center justify-between border-b bg-card px-5 py-3">
             <Image src="/images/arope-logo.png" alt="آروب سورية" width={2576} height={826} className="h-8 w-auto" />
@@ -136,7 +111,18 @@ export function DriverPortal() {
         {step >= 1 && step <= 4 && <StepIndicator current={step} />}
 
         {step === 0 && <WelcomeScreen onStart={() => go(1)} />}
-        {step === 1 && <StepVehicle plate={plate} onPlateChange={setPlate} onBack={() => go(0)} onNext={() => go(2)} />}
+        {step === 1 && (
+          <StepVehicle
+            plate={plate}
+            onPlateChange={(value) => {
+              setPlate(value)
+              setVehicle(null)
+            }}
+            onVehicleVerified={setVehicle}
+            onBack={() => go(0)}
+            onNext={() => go(2)}
+          />
+        )}
         {step === 2 && (
           <StepLocation
             location={location}
@@ -163,7 +149,6 @@ export function DriverPortal() {
             onBack={() => go(3)}
             onSubmit={handleSubmit}
             submitting={submitting}
-            online={online}
           />
         )}
         {step === 5 && submitted && vehicle && location && (

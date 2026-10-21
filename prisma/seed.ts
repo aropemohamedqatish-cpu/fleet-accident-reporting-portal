@@ -121,14 +121,7 @@ async function main() {
   const admin = await withDatabaseRetry("إعداد حساب المدير", () =>
     prisma.adminUser.upsert({
       where: { email: adminEmail! },
-      update: {
-        passwordHash,
-        name: adminName,
-        role: "ADMIN",
-        isActive: true,
-        mustChangePassword: true,
-        sessionVersion: { increment: 1 },
-      },
+      update: {},
       create: {
         email: adminEmail!,
         passwordHash,

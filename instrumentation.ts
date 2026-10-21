@@ -1,7 +1,12 @@
-import { validateServerEnvironment } from '@/lib/server-env'
+import { getServerEnvironmentIssues } from '@/lib/server-env'
 
 export function register(): void {
-  validateServerEnvironment()
+  const issues = getServerEnvironmentIssues()
+  if (issues.length > 0) {
+    console.error('Server environment configuration is incomplete. Database-backed routes may be unavailable.', {
+      issues,
+    })
+  }
 }
 
 export function onRequestError(

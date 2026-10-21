@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { normalizeDigits } from './fleet-data'
+import { normalizeDigits } from './plate'
 
 export const MAX_IMAGES = 10
 export const MAX_IMAGE_FILE_SIZE = 10 * 1024 * 1024

@@ -199,55 +199,6 @@
 			"problemMatcher": []
 		},
 		{
-			"label": "TypeScript check offline outbox",
-			"type": "shell",
-			"command": "pnpm",
-			"args": [
-				"exec",
-				"tsc",
-				"--noEmit"
-			],
-			"isBackground": false,
-			"problemMatcher": [
-				"$tsc"
-			]
-		},
-		{
-			"label": "Check offline outbox diff",
-			"type": "shell",
-			"command": "git",
-			"args": [
-				"diff",
-				"--check"
-			],
-			"isBackground": false,
-			"problemMatcher": []
-		},
-		{
-			"label": "Verify TypeScript offline outbox",
-			"type": "shell",
-			"command": "pnpm",
-			"args": [
-				"exec",
-				"tsc",
-				"--noEmit"
-			],
-			"isBackground": false,
-			"problemMatcher": [
-				"$tsc"
-			]
-		},
-		{
-			"label": "Build offline queue changes",
-			"type": "shell",
-			"command": "pnpm",
-			"args": [
-				"build"
-			],
-			"isBackground": false,
-			"problemMatcher": []
-		},
-		{
 			"label": "Typecheck image compression changes",
 			"type": "shell",
 			"command": "pnpm",

@@ -4,6 +4,7 @@ import path from 'node:path'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { resolveIdempotency } from '@/lib/idempotency'
+import { checkApiRateLimit } from '@/lib/api-rate-limit'
 import {
   incidentPayloadSchema,
   ALLOWED_VIDEO_MIME,
@@ -120,6 +121,25 @@ async function findIdempotentResponse(key: string, requestHash: string) {
 }
 
 export async function POST(request: Request) {
+  try {
+    const rateLimit = await checkApiRateLimit(request.headers, 'incident-submission')
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'تجاوزت عدد محاولات إرسال البلاغ المسموحة. يرجى الانتظار قبل المحاولة مجدداً.' },
+        {
+          status: 429,
+          headers: {
+            'Cache-Control': 'no-store, max-age=0',
+            'Retry-After': String(rateLimit.retryAfterSeconds),
+          },
+        },
+      )
+    }
+  } catch (error) {
+    console.error('Incident submission rate limit check failed.', error)
+    return errorResponse('تعذّر استقبال البلاغ حالياً. يرجى المحاولة لاحقاً.', 503)
+  }
+
   const key = request.headers.get('Idempotency-Key')
   if (!key || !UUID_RE.test(key)) {
     return errorResponse('مفتاح البلاغ مفقود أو غير صالح. يرجى إعادة المحاولة.', 400)

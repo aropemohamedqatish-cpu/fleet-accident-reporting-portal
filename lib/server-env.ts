@@ -1,9 +1,7 @@
-import { validateJwtSecret } from '@/lib/session-token'
-
 export function getDatabaseUrl(): string {
   const connectionString = process.env.DATABASE_URL
   if (!connectionString) {
-    throw new Error('DATABASE_URL is missing. Configure the PostgreSQL connection string before starting the server.')
+    throw new Error('DATABASE_URL is missing. Configure PostgreSQL before using database-backed features.')
   }
 
   let parsedUrl: URL
@@ -23,7 +21,29 @@ export function getDatabaseUrl(): string {
   return connectionString
 }
 
-export function validateServerEnvironment(): void {
-  getDatabaseUrl()
-  validateJwtSecret()
+export function getServerEnvironmentIssues(): string[] {
+  const issues: string[] = []
+  const connectionString = process.env.DATABASE_URL
+  if (!connectionString) {
+    issues.push('DATABASE_URL is missing.')
+  } else {
+    try {
+      const parsedUrl = new URL(connectionString)
+      if (
+        (parsedUrl.protocol !== 'postgres:' && parsedUrl.protocol !== 'postgresql:') ||
+        !parsedUrl.hostname
+      ) {
+        issues.push('DATABASE_URL must use a PostgreSQL URL and include a host.')
+      }
+    } catch {
+      issues.push('DATABASE_URL is not a valid URL.')
+    }
+  }
+
+  const jwtSecret = process.env.JWT_SECRET
+  if (!jwtSecret || new TextEncoder().encode(jwtSecret).length < 32) {
+    issues.push('JWT_SECRET is missing or shorter than 32 bytes.')
+  }
+
+  return issues
 }

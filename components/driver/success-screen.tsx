@@ -1,12 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { CheckCircle2, Clock, Copy, Check, ChevronDown, MessageCircle, Plus } from 'lucide-react'
+import { CheckCircle2, Copy, Check, ChevronDown, MessageCircle, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import type { Vehicle } from '@/lib/fleet-data'
-import type { LocationData, SubmissionOutcome } from '@/lib/report-types'
+import type { LocationData, SubmissionOutcome, Vehicle } from '@/lib/report-types'
 import type { ReporterData } from '@/lib/validation'
 
 type Props = {
@@ -22,7 +21,6 @@ export function SuccessScreen(props: Props) {
   const { outcome, vehicle, location, reporter, photoCount, onNewReport } = props
   const [copied, setCopied] = useState(false)
   const [showWhatsAppChoices, setShowWhatsAppChoices] = useState(false)
-  const staged = outcome.status === 'staged'
   const shortId = outcome.ticketId.slice(0, 8).toUpperCase()
   const submissionHour = new Date(outcome.submittedAt).getHours()
   const isLateNight = submissionHour >= 20 || submissionHour < 8
@@ -44,23 +42,15 @@ export function SuccessScreen(props: Props) {
   return (
     <section className="flex flex-1 flex-col gap-6 px-5 py-8" aria-labelledby="success-title">
       <div className="flex flex-col items-center gap-4 text-center">
-        <div
-          className={
-            staged
-              ? 'flex size-20 items-center justify-center rounded-full bg-warning/15 text-warning'
-              : 'flex size-20 items-center justify-center rounded-full bg-success/15 text-success'
-          }
-        >
-          {staged ? <Clock className="size-10" aria-hidden="true" /> : <CheckCircle2 className="size-10" aria-hidden="true" />}
+        <div className="flex size-20 items-center justify-center rounded-full bg-success/15 text-success">
+          <CheckCircle2 className="size-10" aria-hidden="true" />
         </div>
         <div className="flex flex-col gap-2">
           <h2 id="success-title" className="text-balance text-2xl font-bold">
-            {staged ? 'تم حفظ البلاغ على جهازك' : 'تم إرسال البلاغ بنجاح'}
+            تم إرسال البلاغ بنجاح
           </h2>
           <p className="text-pretty leading-relaxed text-muted-foreground">
-            {staged
-              ? 'لا يوجد اتصال حالياً. سيتم إرسال البلاغ تلقائياً فور عودة الإنترنت، دون الحاجة لإعادة إدخال أي بيانات.'
-              : 'استلم فريق الحوادث بلاغك وسيتواصل معك قريباً. احتفظ برقم البلاغ للمتابعة.'}
+            استلم فريق الحوادث بلاغك وسيتواصل معك قريباً. احتفظ برقم البلاغ للمتابعة.
           </p>
         </div>
       </div>
@@ -99,9 +89,7 @@ export function SuccessScreen(props: Props) {
           </div>
           <div>
             <dt className="text-muted-foreground">الحالة</dt>
-            <dd className={staged ? 'font-semibold text-warning' : 'font-semibold text-success'}>
-              {staged ? 'بانتظار المزامنة' : 'قيد المراجعة'}
-            </dd>
+            <dd className="font-semibold text-success">قيد المراجعة</dd>
           </div>
         </dl>
         <dl className="mt-4 grid gap-3 border-t pt-4 text-sm">
@@ -139,50 +127,48 @@ export function SuccessScreen(props: Props) {
       </div>
 
       <div className="mt-auto flex flex-col gap-3">
-        {!staged && (
-          <div className="space-y-3">
-            <p className="text-center text-sm font-medium text-muted-foreground">
-              هل ترغب بالتواصل مع أحد المشرفين عبر واتساب؟
-            </p>
-            <Button
-              type="button"
-              size="lg"
-              aria-expanded={showWhatsAppChoices}
-              aria-controls="whatsapp-supervisor-choices"
-              onClick={() => setShowWhatsAppChoices((visible) => !visible)}
-              className="h-14 w-full gap-2 bg-[#25D366] text-base font-semibold text-[#0b3d1f] shadow-sm hover:bg-[#25D366]/90"
-            >
-              <MessageCircle className="size-5" aria-hidden="true" />
-              {showWhatsAppChoices ? 'اختيار مشرف واتساب' : 'نعم، أريد التواصل عبر واتساب'}
-              <ChevronDown
-                className={cn('size-4 transition-transform', showWhatsAppChoices && 'rotate-180')}
-                aria-hidden="true"
-              />
-            </Button>
-            {showWhatsAppChoices && (
-              <div id="whatsapp-supervisor-choices" className="grid gap-2 sm:grid-cols-2">
-                {[
-                  { number: 1, name: 'المشرف الأول' },
-                  { number: 2, name: 'المشرف الثاني' },
-                ].map((supervisor) => (
-                  <a
-                    key={supervisor.number}
-                    href={`/api/incidents/${encodeURIComponent(outcome.ticketId)}/whatsapp/${supervisor.number}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={cn(
-                      buttonVariants({ size: 'lg' }),
-                      'h-12 gap-2 border border-[#25D366]/40 bg-white text-sm font-semibold text-[#0b3d1f] hover:bg-[#25D366]/10',
-                    )}
-                  >
-                    <MessageCircle className="size-4" aria-hidden="true" />
-                    مراسلة {supervisor.name}
-                  </a>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+        <div className="space-y-3">
+          <p className="text-center text-sm font-medium text-muted-foreground">
+            هل ترغب بالتواصل مع أحد المشرفين عبر واتساب؟
+          </p>
+          <Button
+            type="button"
+            size="lg"
+            aria-expanded={showWhatsAppChoices}
+            aria-controls="whatsapp-supervisor-choices"
+            onClick={() => setShowWhatsAppChoices((visible) => !visible)}
+            className="h-14 w-full gap-2 bg-[#25D366] text-base font-semibold text-[#0b3d1f] shadow-sm hover:bg-[#25D366]/90"
+          >
+            <MessageCircle className="size-5" aria-hidden="true" />
+            {showWhatsAppChoices ? 'اختيار مشرف واتساب' : 'نعم، أريد التواصل عبر واتساب'}
+            <ChevronDown
+              className={cn('size-4 transition-transform', showWhatsAppChoices && 'rotate-180')}
+              aria-hidden="true"
+            />
+          </Button>
+          {showWhatsAppChoices && (
+            <div id="whatsapp-supervisor-choices" className="grid gap-2 sm:grid-cols-2">
+              {[
+                { number: 1, name: 'المشرف الأول' },
+                { number: 2, name: 'المشرف الثاني' },
+              ].map((supervisor) => (
+                <a
+                  key={supervisor.number}
+                  href={`/api/incidents/${encodeURIComponent(outcome.ticketId)}/whatsapp/${supervisor.number}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(
+                    buttonVariants({ size: 'lg' }),
+                    'h-12 gap-2 border border-[#25D366]/40 bg-white text-sm font-semibold text-[#0b3d1f] hover:bg-[#25D366]/10',
+                  )}
+                >
+                  <MessageCircle className="size-4" aria-hidden="true" />
+                  مراسلة {supervisor.name}
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
         <Button variant="outline" size="lg" className="h-12 gap-2" onClick={onNewReport}>
           <Plus className="size-4" aria-hidden="true" />
           بلاغ جديد

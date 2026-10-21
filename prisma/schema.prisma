@@ -117,3 +117,12 @@ model SecurityEvent {
   @@index([ipAddress, eventType, createdAt])
   @@index([createdAt])
 }
+
+model ApiRateLimitBucket {
+  key              String   @id
+  windowStartedAt  DateTime
+  requestCount     Int
+  updatedAt        DateTime @updatedAt
+
+  @@index([updatedAt])
+}

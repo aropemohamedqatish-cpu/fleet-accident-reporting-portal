@@ -39,7 +39,11 @@ export type LoginFailureCategory = 'schema' | 'database_unavailable' | 'configur
 
 export function classifyLoginFailure(error: unknown): LoginFailureCategory {
   const details = collectErrorDetails(error)
-  if (details.some(({ message }) => /JWT_SECRET is missing or invalid/i.test(message ?? ''))) {
+  if (
+    details.some(({ message }) =>
+      /JWT_SECRET is missing or invalid|DATABASE_URL is missing|DATABASE_URL is invalid/i.test(message ?? ''),
+    )
+  ) {
     return 'configuration'
   }
 

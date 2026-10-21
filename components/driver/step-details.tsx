@@ -14,7 +14,6 @@ type Props = {
   onBack: () => void
   onSubmit: (data: ReporterData) => void
   submitting: boolean
-  online: boolean
 }
 
 function fieldErrors(values: ReporterInput) {
@@ -29,7 +28,7 @@ function fieldErrors(values: ReporterInput) {
   return { result, errors }
 }
 
-export function StepDetails({ values, onChange, onBack, onSubmit, submitting, online }: Props) {
+export function StepDetails({ values, onChange, onBack, onSubmit, submitting }: Props) {
   const ids = { fullName: useId(), mobile: useId(), notes: useId() }
   const [touched, setTouched] = useState<Partial<Record<Field, boolean>>>({})
   const { result, errors } = fieldErrors(values)
@@ -57,7 +56,7 @@ export function StepDetails({ values, onChange, onBack, onSubmit, submitting, on
       description="راجع بياناتك قبل الإرسال. سيتواصل معك فريق الحوادث على الرقم المدخل."
       onBack={onBack}
       onNext={handleSubmit}
-      nextLabel={online ? 'إرسال البلاغ' : 'حفظ البلاغ للإرسال لاحقاً'}
+      nextLabel="إرسال البلاغ"
       loading={submitting}
     >
       <div className="flex flex-col gap-5">
