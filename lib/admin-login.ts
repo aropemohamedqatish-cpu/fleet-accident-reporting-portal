@@ -20,7 +20,7 @@ export type AdminAuthenticationResult =
   | { status: 'invalid' }
   | { status: 'rate_limited' }
 
-type AdminUserLookup = Pick<AuthenticatedAdmin, 'id' | 'email' | 'name' | 'role'> & {
+type AdminUserLookup = Pick<AuthenticatedAdmin, 'id' | 'email' | 'name' | 'role' | 'mustChangePassword'> & {
   passwordHash: string
   isActive: boolean
 }
