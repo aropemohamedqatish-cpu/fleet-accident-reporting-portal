@@ -2,7 +2,6 @@
 
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
-import { Prisma } from '@prisma/client'
 import { revalidatePath } from 'next/cache'
 import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
@@ -21,6 +20,15 @@ const resetPasswordSchema = z.object({
   userId: userIdSchema,
   password: z.string().min(12, 'يجب أن تتكون كلمة المرور المؤقتة من 12 محرفاً على الأقل.').max(128, 'كلمة المرور طويلة جداً.'),
 })
+
+function isUniqueConstraintError(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    error.code === 'P2002'
+  )
+}
 
 async function getAuthorizedAdmin() {
   const session = await getSession()
@@ -67,7 +75,7 @@ export async function createUserAction(_previousState: CreateUserState, formData
     revalidatePath('/admin/users')
     return { success: `تم إنشاء حساب الموظف ${parsed.data.name} بنجاح.` }
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+    if (isUniqueConstraintError(error)) {
       return { error: 'يوجد حساب مسجل بهذا البريد الإلكتروني مسبقاً.' }
     }
     console.error('Admin user creation failed.', error)
