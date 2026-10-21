@@ -2,6 +2,7 @@
 
 import { useState, useTransition, type KeyboardEvent } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { ChevronLeft, FileSearch, ImageOff, Loader2, Paperclip } from 'lucide-react'
 import { PlateBadge } from '@/components/brand/plate'
 import { Badge } from '@/components/ui/badge'
@@ -17,7 +18,21 @@ import {
 } from '@/lib/admin-claims'
 import { cn } from '@/lib/utils'
 
-export function ClaimsTable({ rows, total }: { rows: IncidentRow[]; total: number }) {
+export function ClaimsTable({
+  rows,
+  total,
+  filteredTotal,
+  currentPage,
+  pageCount,
+  filterQuery,
+}: {
+  rows: IncidentRow[]
+  total: number
+  filteredTotal: number
+  currentPage: number
+  pageCount: number
+  filterQuery: string
+}) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
   const [navigatingId, setNavigatingId] = useState<string | null>(null)
@@ -175,6 +190,37 @@ export function ClaimsTable({ rows, total }: { rows: IncidentRow[]; total: numbe
             </>
           )}
         </CardContent>
+        {filteredTotal > 0 && (
+          <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-4 sm:px-6">
+            <p className="text-sm font-medium text-muted-foreground" aria-live="polite">
+              الصفحة {formatNumber(currentPage)} من {formatNumber(pageCount)} — {formatNumber(filteredTotal)} بلاغ
+            </p>
+            <nav aria-label="ترقيم صفحات سجل البلاغات" className="flex items-center gap-2">
+              {currentPage > 1 ? (
+                <Link
+                  href={`/admin/dashboard?${filterQuery ? `${filterQuery}&` : ''}page=${currentPage - 1}`}
+                  className="inline-flex h-10 items-center rounded-lg border border-border px-4 text-sm font-bold text-ink hover:bg-accent"
+                  rel="prev"
+                >
+                  السابق
+                </Link>
+              ) : (
+                <span className="inline-flex h-10 items-center rounded-lg border border-border px-4 text-sm font-bold text-muted-foreground" aria-disabled="true">السابق</span>
+              )}
+              {currentPage < pageCount ? (
+                <Link
+                  href={`/admin/dashboard?${filterQuery ? `${filterQuery}&` : ''}page=${currentPage + 1}`}
+                  className="inline-flex h-10 items-center rounded-lg border border-border px-4 text-sm font-bold text-ink hover:bg-accent"
+                  rel="next"
+                >
+                  التالي
+                </Link>
+              ) : (
+                <span className="inline-flex h-10 items-center rounded-lg border border-border px-4 text-sm font-bold text-muted-foreground" aria-disabled="true">التالي</span>
+              )}
+            </nav>
+          </footer>
+        )}
       </Card>
     </>
   )

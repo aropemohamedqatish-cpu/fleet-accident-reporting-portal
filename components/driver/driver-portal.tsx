@@ -5,7 +5,6 @@ import Image from 'next/image'
 import { toast } from 'sonner'
 import { findVehicle, normalizePlate } from '@/lib/fleet-data'
 import { IncidentSubmissionError, stageReport, submitIncident } from '@/lib/offline-queue'
-import { buildIncidentWhatsAppUrl, INCIDENT_SUPERVISORS } from '@/lib/incident-whatsapp'
 import type { LocationData, MediaItem, SubmissionOutcome } from '@/lib/report-types'
 import type { IncidentPayload, ReporterData, ReporterInput } from '@/lib/validation'
 import { useOutboxSync } from '@/hooks/use-outbox-sync'
@@ -22,7 +21,7 @@ type Step = 0 | 1 | 2 | 3 | 4 | 5
 const EMPTY_REPORTER: ReporterInput = { fullName: '', mobile: '', notes: '' }
 
 export function DriverPortal() {
-  const { online, pending, syncing, refresh } = useOutboxSync()
+  const { online, pending, failed, syncing, storageError, refresh, retry, discard } = useOutboxSync()
   const [step, setStep] = useState<Step>(0)
   const [plate, setPlate] = useState('')
   const [location, setLocation] = useState<LocationData | null>(null)
@@ -34,7 +33,6 @@ export function DriverPortal() {
 
   const idempotencyKey = useRef<string | null>(null)
   const inFlight = useRef(false)
-  const whatsappWindows = useRef<Array<Window | null>>([])
   const photosRef = useRef(photos)
   photosRef.current = photos
 
@@ -71,18 +69,6 @@ export function DriverPortal() {
     if (inFlight.current || !vehicle || !location) return
     inFlight.current = true
     setSubmitting(true)
-    whatsappWindows.current = navigator.onLine
-      ? INCIDENT_SUPERVISORS.map(() => {
-          const popup = window.open('about:blank', '_blank')
-          if (popup) popup.opener = null
-          return popup
-        })
-      : []
-
-    const closePendingWhatsAppWindows = () => {
-      whatsappWindows.current.forEach((popup) => popup?.close())
-      whatsappWindows.current = []
-    }
 
     idempotencyKey.current ??= crypto.randomUUID()
     const key = idempotencyKey.current
@@ -109,29 +95,14 @@ export function DriverPortal() {
       }
       const res = await submitIncident(payload, key, files)
       const outcome: SubmissionOutcome = { ticketId: res.incidentId, status: 'submitted', submittedAt: payload.createdAt }
-      const whatsappDetails = { outcome, vehicle, location, reporter: data, photoCount: files.length }
-      whatsappWindows.current.forEach((popup, index) => {
-        if (popup && !popup.closed) {
-          try {
-            popup.location.replace(buildIncidentWhatsAppUrl(INCIDENT_SUPERVISORS[index].phone, whatsappDetails))
-          } catch (error) {
-            console.error('Could not open WhatsApp chat after incident submission.', error)
-            popup.close()
-          }
-        }
-      })
-      whatsappWindows.current = []
       setSubmitted({ outcome, data })
       go(5)
     } catch (err) {
       if (err instanceof TypeError) {
-        closePendingWhatsAppWindows()
         await stageLocally()
       } else if (err instanceof IncidentSubmissionError) {
-        closePendingWhatsAppWindows()
         toast.error('تعذّر إرسال البلاغ', { description: err.message })
       } else {
-        closePendingWhatsAppWindows()
         toast.error('تعذّر إرسال البلاغ', {
           description: err instanceof Error ? err.message : 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.',
         })
@@ -145,7 +116,15 @@ export function DriverPortal() {
   return (
     <div className="flex min-h-dvh justify-center bg-muted md:py-8">
       <main className="flex w-full max-w-md flex-col overflow-hidden bg-background md:rounded-3xl md:border md:shadow-xl">
-        <ConnectionBanner online={online} pending={pending} syncing={syncing} />
+        <ConnectionBanner
+          online={online}
+          pending={pending}
+          failed={failed}
+          syncing={syncing}
+          storageError={storageError}
+          onRetry={(key) => void retry(key)}
+          onDiscard={(key) => void discard(key)}
+        />
 
         {step > 0 && (
           <header className="flex items-center justify-between border-b bg-card px-5 py-3">

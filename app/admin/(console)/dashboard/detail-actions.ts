@@ -5,7 +5,7 @@ import { headers } from 'next/headers'
 import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getRequestIp } from '@/lib/request-ip'
-import { isIncidentStatus, STATUS_LABELS } from '@/lib/admin-claims'
+import { canTransitionIncidentStatus, isIncidentStatus, STATUS_LABELS } from '@/lib/admin-claims'
 
 export type UpdateStatusResult = { success: true } | { success: false; error: string }
 
@@ -22,6 +22,7 @@ export async function updateStatusAction(id: string, status: string): Promise<Up
   try {
     const session = await getSession()
     if (!session) return { success: false, error: 'انتهت الجلسة. يرجى تسجيل الدخول مجدداً.' }
+    if (session.mustChangePassword) return { success: false, error: 'يجب تغيير كلمة المرور المؤقتة قبل متابعة البلاغات.' }
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
       return { success: false, error: 'معرّف البلاغ غير صالح.' }
     }
@@ -37,6 +38,9 @@ export async function updateStatusAction(id: string, status: string): Promise<Up
       if (!actor) return { success: false, error: 'الحساب غير موجود. يرجى تسجيل الدخول مجدداً.' }
       if (!incident) return { success: false, error: 'البلاغ المطلوب غير موجود.' }
       if (incident.status === status) return { success: true }
+      if (!canTransitionIncidentStatus(incident.status, status)) {
+        return { success: false, error: 'انتقال الحالة غير مسموح. اتبع تسلسل المعالجة المحدد للبلاغ.' }
+      }
 
       const update = await tx.accident.updateMany({
         where: { id, status: incident.status },

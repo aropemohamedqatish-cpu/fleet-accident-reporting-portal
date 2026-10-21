@@ -1,5 +1,5 @@
 {
-  "name": "my-project",
+  "name": "arope-fleet-accident-reporting-portal",
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@12.3.4",
@@ -7,6 +7,8 @@
     "dev": "prisma generate && next dev",
     "build": "prisma generate && next build",
     "start": "next start",
+    "test": "tsx --test tests/critical-paths.test.ts",
+    "db:migrate:deploy": "prisma migrate deploy",
     "postinstall": "prisma skills sync || exit 0"
   },
   "dependencies": {

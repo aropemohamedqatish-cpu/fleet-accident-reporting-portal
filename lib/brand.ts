@@ -9,7 +9,7 @@ export const EMERGENCY = {
   ambulance: '110',
   police: '112',
   /** On-call emergency supervisor. Override per environment with NEXT_PUBLIC_EMERGENCY_PHONE. */
-  supervisorPhone: process.env.NEXT_PUBLIC_EMERGENCY_PHONE ?? '0999999999',
+  supervisorPhone: process.env.NEXT_PUBLIC_EMERGENCY_PHONE ?? '963966888943',
 } as const
 
 const LATIN_DIGITS = 'ar-SY-u-nu-latn'

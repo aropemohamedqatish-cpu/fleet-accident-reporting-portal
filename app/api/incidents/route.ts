@@ -4,6 +4,7 @@ import path from 'node:path'
 import { NextResponse } from 'next/server'
 import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
+import { resolveIdempotency } from '@/lib/idempotency'
 import {
   incidentPayloadSchema,
   ALLOWED_VIDEO_MIME,
@@ -105,11 +106,12 @@ async function findIdempotentResponse(key: string, requestHash: string) {
     where: { idempotencyKey: key },
     select: { id: true, requestHash: true },
   })
-  if (!existing) return null
-  if (existing.requestHash !== requestHash) {
+  const result = resolveIdempotency(existing, requestHash)
+  if (result.kind === 'new') return null
+  if (result.kind === 'conflict') {
     return errorResponse('مفتاح الإرسال مستخدم مسبقاً مع بيانات بلاغ مختلفة.', 409)
   }
-  return NextResponse.json({ incidentId: existing.id, replayed: true })
+  return NextResponse.json({ incidentId: result.incidentId, replayed: true })
 }
 
 export async function POST(request: Request) {

@@ -3,6 +3,7 @@ import { LockKeyhole, ShieldCheck, UsersRound } from 'lucide-react'
 import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { UserCreateForm } from '@/components/admin/user-create-form'
+import { UserAccountActions } from '@/components/admin/user-account-actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,7 +35,7 @@ export default async function AdminUsersPage() {
 
   const users = await prisma.adminUser.findMany({
     orderBy: { createdAt: 'desc' },
-    select: { id: true, name: true, email: true, role: true, createdAt: true },
+    select: { id: true, name: true, email: true, role: true, isActive: true, mustChangePassword: true, createdAt: true },
   })
 
   return (
@@ -61,7 +62,7 @@ export default async function AdminUsersPage() {
           </span>
           <div>
             <h2 className="font-extrabold text-slate-950">إضافة موظف جديد</h2>
-            <p className="mt-0.5 text-sm font-medium text-slate-700">تُشفّر كلمة المرور قبل حفظ الحساب.</p>
+            <p className="mt-0.5 text-sm font-medium text-slate-700">تُحفظ بصمة كلمة المرور فقط، ويُطلب من الموظف تغييرها عند أول دخول.</p>
           </div>
         </header>
         <div className="p-5 sm:p-7">
@@ -81,19 +82,27 @@ export default async function AdminUsersPage() {
         ) : (
           <ul className="divide-y divide-slate-200">
             {users.map((user) => (
-              <li key={user.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-7">
-                <div className="min-w-0">
-                  <p className="truncate font-bold text-slate-950">{user.name}</p>
-                  <p dir="ltr" className="mt-1 truncate text-start text-sm font-medium text-slate-700">{user.email}</p>
+              <li key={user.id} className="flex flex-col justify-between gap-4 px-5 py-5 sm:px-7 lg:flex-row lg:items-center">
+                <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-6 gap-y-2">
+                  <div className="min-w-0">
+                    <p className="truncate font-bold text-slate-950">{user.name}</p>
+                    <p dir="ltr" className="mt-1 truncate text-start text-sm font-medium text-slate-700">{user.email}</p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={user.role === 'ADMIN' ? 'rounded-full bg-[#003366]/10 px-3 py-1.5 text-xs font-bold text-[#003366]' : 'rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-800'}>
+                      {ROLE_LABELS[user.role]}
+                    </span>
+                    {user.mustChangePassword && (
+                      <span className="rounded-full bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-900">
+                        كلمة مرور مؤقتة
+                      </span>
+                    )}
+                    <time className="text-xs font-medium text-slate-700" dateTime={user.createdAt.toISOString()}>
+                      {user.createdAt.toLocaleDateString('ar-SY', { dateStyle: 'medium', timeZone: 'Asia/Damascus' })}
+                    </time>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className={user.role === 'ADMIN' ? 'rounded-full bg-[#003366]/10 px-3 py-1.5 text-xs font-bold text-[#003366]' : 'rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-800'}>
-                    {ROLE_LABELS[user.role]}
-                  </span>
-                  <time className="hidden text-xs font-medium text-slate-700 sm:block" dateTime={user.createdAt.toISOString()}>
-                    {user.createdAt.toLocaleDateString('ar-SY', { dateStyle: 'medium', timeZone: 'Asia/Damascus' })}
-                  </time>
-                </div>
+                <UserAccountActions userId={user.id} isActive={user.isActive} isCurrentUser={user.id === session.userId} />
               </li>
             ))}
           </ul>

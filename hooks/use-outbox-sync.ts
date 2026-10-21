@@ -1,8 +1,13 @@
 'use client'
 
-import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { toast } from 'sonner'
-import { flushOutbox, listStaged } from '@/lib/offline-queue'
+import {
+  flushOutbox,
+  listStaged,
+  removeStaged,
+  type StagedReport,
+} from '@/lib/offline-queue'
 
 function subscribe(callback: () => void) {
   window.addEventListener('online', callback)
@@ -21,53 +26,94 @@ export function useOnlineStatus() {
   )
 }
 
-/** Keeps the IndexedDB outbox count fresh and auto-syncs staged reports whenever connectivity returns. */
+/** Tracks saved reports, retries eligible entries on reconnect, and exposes failed entries for driver action. */
 export function useOutboxSync() {
   const online = useOnlineStatus()
-  const [pending, setPending] = useState(0)
+  const [reports, setReports] = useState<StagedReport[]>([])
   const [syncing, setSyncing] = useState(false)
+  const [storageError, setStorageError] = useState<string | null>(null)
+  const syncInFlight = useRef(false)
 
   const refresh = useCallback(async () => {
     try {
-      setPending((await listStaged()).length)
-    } catch {
-      setPending(0)
+      setReports(await listStaged())
+      setStorageError(null)
+    } catch (error) {
+      console.error('Could not read saved incident reports.', error)
+      setStorageError('تعذّر قراءة البلاغات المحفوظة على هذا الجهاز.')
     }
   }, [])
 
-  useEffect(() => {
-    if (!online) {
-      void refresh()
-      return
+  const sync = useCallback(async (retryKeys: readonly string[] = []) => {
+    if (!online || syncInFlight.current) return
+    syncInFlight.current = true
+    setSyncing(true)
+    try {
+      const result = await flushOutbox(retryKeys)
+      await refresh()
+      if (result.sent.length > 0) {
+        toast.success('تمت مزامنة البلاغات المحفوظة', {
+          description: `تم إرسال ${result.sent.length} بلاغ بنجاح.`,
+        })
+      }
+      if (result.failed.length > 0) {
+        toast.error('تعذّرت مزامنة بعض البلاغات', {
+          description: `هناك ${result.failed.length} بلاغ يحتاج إلى مراجعتك. يظهر سبب التعذّر أسفل الصفحة.`,
+        })
+      }
+      return result
+    } catch (error) {
+      console.error('Could not synchronize saved incident reports.', error)
+      toast.error('تعذّرت مزامنة البلاغات المحفوظة', {
+        description: error instanceof Error ? error.message : 'تحقق من الاتصال ثم أعد المحاولة.',
+      })
+      await refresh()
+      return null
+    } finally {
+      syncInFlight.current = false
+      setSyncing(false)
     }
+  }, [online, refresh])
+
+  useEffect(() => {
+    void refresh()
+  }, [refresh])
+
+  useEffect(() => {
+    if (!online) return
     let cancelled = false
     void (async () => {
-      const staged = await listStaged().catch(() => [])
-      if (staged.length === 0 || cancelled) return setPending(0)
-      setSyncing(true)
-      let results: Awaited<ReturnType<typeof flushOutbox>> = []
       try {
-        results = await flushOutbox()
+        const staged = await listStaged()
+        if (cancelled || !staged.some((report) => !report.syncError)) return
+        await sync()
       } catch (error) {
-        if (!cancelled) {
-          toast.error('تعذّرت مزامنة البلاغات المحفوظة', {
-            description: error instanceof Error ? error.message : 'يرجى التحقق من الاتصال والمحاولة لاحقاً.',
-          })
-        }
-      }
-      if (cancelled) return
-      setSyncing(false)
-      await refresh()
-      if (results.length > 0) {
-        toast.success('تمت مزامنة البلاغات المحفوظة', {
-          description: `تم إرسال ${results.length} بلاغ بنجاح بعد عودة الاتصال.`,
-        })
+        console.error('Could not inspect saved incident reports for synchronization.', error)
+        if (!cancelled) setStorageError('تعذّر الوصول إلى البلاغات المحفوظة على هذا الجهاز.')
       }
     })()
     return () => {
       cancelled = true
     }
-  }, [online, refresh])
+  }, [online, sync])
 
-  return { online, pending, syncing, refresh }
+  const retry = useCallback(async (key: string) => {
+    await sync([key])
+  }, [sync])
+
+  const discard = useCallback(async (key: string) => {
+    try {
+      await removeStaged(key)
+      await refresh()
+      toast.success('تم حذف البلاغ المحفوظ من هذا الجهاز')
+    } catch (error) {
+      console.error('Could not remove saved incident report.', error)
+      toast.error('تعذّر حذف البلاغ المحفوظ')
+    }
+  }, [refresh])
+
+  const pending = reports.filter((report) => !report.syncError).length
+  const failed = reports.filter((report) => report.syncError)
+
+  return { online, pending, failed, syncing, storageError, refresh, retry, discard }
 }

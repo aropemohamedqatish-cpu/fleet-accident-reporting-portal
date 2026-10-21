@@ -2,6 +2,12 @@ export { formatDateTime, formatDate, formatRelative, formatNumber } from './bran
 
 export const INCIDENT_STATUSES = ['SUBMITTED', 'UNDER_REVIEW', 'SENT_TO_INSURER', 'CLOSED'] as const
 export type IncidentStatus = (typeof INCIDENT_STATUSES)[number]
+export const ALLOWED_STATUS_TRANSITIONS: Record<IncidentStatus, readonly IncidentStatus[]> = {
+  SUBMITTED: ['UNDER_REVIEW'],
+  UNDER_REVIEW: ['SENT_TO_INSURER'],
+  SENT_TO_INSURER: ['CLOSED'],
+  CLOSED: [],
+}
 
 export type StatusTone = 'blue' | 'amber' | 'indigo' | 'green'
 
@@ -18,6 +24,14 @@ export const STATUS_LABELS: Record<string, string> = Object.fromEntries(
 
 export function isIncidentStatus(value: string): value is IncidentStatus {
   return (INCIDENT_STATUSES as readonly string[]).includes(value)
+}
+
+export function canTransitionIncidentStatus(from: string, to: string): boolean {
+  return isIncidentStatus(from) && isIncidentStatus(to) && ALLOWED_STATUS_TRANSITIONS[from].includes(to)
+}
+
+export function requiresStatusTransitionConfirmation(status: string): boolean {
+  return status === 'SENT_TO_INSURER' || status === 'CLOSED'
 }
 
 export type AdminFilters = {
@@ -75,12 +89,9 @@ export type DashboardStats = {
   total: number
   pending: number
   referred: number
-  /** Incidents without any attachment — need urgent verification. */
-  missingMedia: number
   totalDelta: Delta
   pendingDelta: Delta
   referredDelta: Delta
-  missingMediaDelta: Delta
   statusBreakdown: Record<IncidentStatus, number>
   /** Daily incident counts for the last 14 days (Damascus time), oldest first. */
   trend: TrendPoint[]

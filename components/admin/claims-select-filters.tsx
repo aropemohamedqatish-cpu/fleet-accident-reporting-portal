@@ -28,6 +28,7 @@ export function ClaimsSelectFilters() {
 
   function setParam(key: string, value: string, fallback: string) {
     const params = new URLSearchParams(searchParams.toString())
+    params.delete('page')
     if (!value || value === fallback) params.delete(key)
     else params.set(key, value)
     startTransition(() => router.replace(`${pathname}?${params.toString()}`, { scroll: false }))

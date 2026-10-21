@@ -1,9 +1,9 @@
-import { BellRing, CheckCircle2, Clock3, FileText, Minus, TrendingDown, TrendingUp, type LucideIcon } from 'lucide-react'
+import { CheckCircle2, Clock3, FileText, Minus, TrendingDown, TrendingUp, type LucideIcon } from 'lucide-react'
 import { AnimatedNumber } from '@/components/ui/animated-number'
 import type { DashboardStats, Delta } from '@/lib/admin-claims'
 import { cn } from '@/lib/utils'
 
-type Tone = 'primary' | 'amber' | 'emerald' | 'rose'
+type Tone = 'primary' | 'amber' | 'emerald'
 /** Which direction of change is good news for this metric. */
 type GoodWhen = 'up' | 'down' | 'none'
 
@@ -11,12 +11,11 @@ const TONES: Record<Tone, { accent: string; tile: string }> = {
   primary: { accent: 'from-[#003366] to-[#2f6fd0]', tile: 'bg-brand-soft text-brand' },
   amber: { accent: 'from-[#a35a00] to-[#f0a63a]', tile: 'bg-warning-soft text-warning' },
   emerald: { accent: 'from-[#0f7a46] to-[#34d399]', tile: 'bg-success-soft text-success' },
-  rose: { accent: 'from-[#b42318] to-[#f0776c]', tile: 'bg-danger-soft text-destructive' },
 }
 
 export function StatsGrid({ stats }: { stats: DashboardStats }) {
   return (
-    <section aria-label="مؤشرات الحوادث" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <section aria-label="مؤشرات الحوادث" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       <StatCard
         index={0}
         title="إجمالي البلاغات"
@@ -46,16 +45,6 @@ export function StatsGrid({ stats }: { stats: DashboardStats }) {
         detail="مُحالة لشركة التأمين أو مغلقة"
         delta={stats.referredDelta}
         goodWhen="up"
-      />
-      <StatCard
-        index={3}
-        title="بلاغات بلا مرفقات"
-        value={stats.missingMedia}
-        icon={BellRing}
-        tone="rose"
-        detail="تحتاج مراجعة عاجلة قبل الإحالة"
-        delta={stats.missingMediaDelta}
-        goodWhen="down"
       />
     </section>
   )

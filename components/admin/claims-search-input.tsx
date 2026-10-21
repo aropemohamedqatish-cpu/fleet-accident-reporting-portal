@@ -26,6 +26,7 @@ export function ClaimsSearchInput() {
   const apply = useCallback(
     (value: string) => {
       const params = new URLSearchParams(searchParams.toString())
+      params.delete('page')
       if (!value) params.delete('search')
       else params.set('search', value)
       startTransition(() => router.replace(`${pathname}?${params.toString()}`, { scroll: false }))

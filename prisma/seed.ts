@@ -48,12 +48,16 @@ async function main() {
       passwordHash,
       name: adminName,
       role: "ADMIN",
+      isActive: true,
+      mustChangePassword: true,
+      sessionVersion: { increment: 1 },
     },
     create: {
       email: adminEmail!,
       passwordHash,
       name: adminName,
       role: "ADMIN",
+      mustChangePassword: true,
     },
     select: { id: true },
   });

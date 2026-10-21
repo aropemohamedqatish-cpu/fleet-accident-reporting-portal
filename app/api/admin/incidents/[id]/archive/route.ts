@@ -17,6 +17,7 @@ const EXT_BY_MIME: Record<string, string> = {
 export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'غير مصرّح. يرجى تسجيل الدخول.' }, { status: 401 })
+  if (session.mustChangePassword) return NextResponse.json({ error: 'يجب تغيير كلمة المرور المؤقتة أولاً.' }, { status: 403 })
   const { id } = await ctx.params
 
   try {

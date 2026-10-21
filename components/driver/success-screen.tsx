@@ -1,14 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { CheckCircle2, Clock, Copy, Check, MessageCircle, Plus } from 'lucide-react'
+import { CheckCircle2, Clock, Copy, Check, ChevronDown, MessageCircle, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { Vehicle } from '@/lib/fleet-data'
 import type { LocationData, SubmissionOutcome } from '@/lib/report-types'
 import type { ReporterData } from '@/lib/validation'
-import { buildIncidentWhatsAppUrl, INCIDENT_SUPERVISORS } from '@/lib/incident-whatsapp'
 
 type Props = {
   outcome: SubmissionOutcome
@@ -22,6 +21,7 @@ type Props = {
 export function SuccessScreen(props: Props) {
   const { outcome, vehicle, location, reporter, photoCount, onNewReport } = props
   const [copied, setCopied] = useState(false)
+  const [showWhatsAppChoices, setShowWhatsAppChoices] = useState(false)
   const staged = outcome.status === 'staged'
   const shortId = outcome.ticketId.slice(0, 8).toUpperCase()
   const submissionHour = new Date(outcome.submittedAt).getHours()
@@ -68,13 +68,13 @@ export function SuccessScreen(props: Props) {
       {isLateNight && (
         <aside className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-950" role="note">
           <p className="mb-3 text-sm font-medium leading-relaxed">
-            تنبيه للمساندة الفورية: نظراً لوقوع الحادث في وقت متأخر، إذا لم يتم الرد عليك عبر واتساب خلال 10 دقائق وتطلب الأمر تدخلاً ميدانياً عاجلاً، يرجى الاتصال مباشرة بمشرف الطوارئ المناوب على الرقم التالي: [0999999999]
+            تنبيه للمساندة الفورية: نظراً لوقوع الحادث في وقت متأخر، إذا لم يتم الرد عليك عبر واتساب خلال 10 دقائق وتطلب الأمر تدخلاً ميدانياً عاجلاً، يرجى الاتصال مباشرة بمشرف الطوارئ المناوب على الرقم التالي: +963 966 888 943
           </p>
           <a
-            href="tel:0999999999"
+            href="tel:+963966888943"
             className="inline-flex min-h-11 items-center justify-center rounded-lg bg-amber-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-800"
           >
-            اتصل بمشرف الطوارئ: 0999999999
+            اتصل بمشرف الطوارئ: +963 966 888 943
           </a>
         </aside>
       )}
@@ -140,25 +140,48 @@ export function SuccessScreen(props: Props) {
 
       <div className="mt-auto flex flex-col gap-3">
         {!staged && (
-          <>
-           
-            {INCIDENT_SUPERVISORS.map((supervisor) => (
-              <a
-                key={supervisor.phone}
-                href={buildIncidentWhatsAppUrl(supervisor.phone, props)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={cn(
-                  buttonVariants({ size: 'lg' }),
-                  'h-14 gap-2 bg-[#25D366] text-base font-semibold text-[#0b3d1f] shadow-sm hover:bg-[#25D366]/90',
-                )}
-              >
-                <MessageCircle className="size-5" aria-hidden="true" />
-                مراسلة {supervisor.name} عبر واتساب
-                <span className="font-mono text-sm" dir="ltr">{supervisor.phone}</span>
-              </a>
-            ))}
-          </>
+          <div className="space-y-3">
+            <p className="text-center text-sm font-medium text-muted-foreground">
+              هل ترغب بالتواصل مع أحد المشرفين عبر واتساب؟
+            </p>
+            <Button
+              type="button"
+              size="lg"
+              aria-expanded={showWhatsAppChoices}
+              aria-controls="whatsapp-supervisor-choices"
+              onClick={() => setShowWhatsAppChoices((visible) => !visible)}
+              className="h-14 w-full gap-2 bg-[#25D366] text-base font-semibold text-[#0b3d1f] shadow-sm hover:bg-[#25D366]/90"
+            >
+              <MessageCircle className="size-5" aria-hidden="true" />
+              {showWhatsAppChoices ? 'اختيار مشرف واتساب' : 'نعم، أريد التواصل عبر واتساب'}
+              <ChevronDown
+                className={cn('size-4 transition-transform', showWhatsAppChoices && 'rotate-180')}
+                aria-hidden="true"
+              />
+            </Button>
+            {showWhatsAppChoices && (
+              <div id="whatsapp-supervisor-choices" className="grid gap-2 sm:grid-cols-2">
+                {[
+                  { number: 1, name: 'المشرف الأول' },
+                  { number: 2, name: 'المشرف الثاني' },
+                ].map((supervisor) => (
+                  <a
+                    key={supervisor.number}
+                    href={`/api/incidents/${encodeURIComponent(outcome.ticketId)}/whatsapp/${supervisor.number}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(
+                      buttonVariants({ size: 'lg' }),
+                      'h-12 gap-2 border border-[#25D366]/40 bg-white text-sm font-semibold text-[#0b3d1f] hover:bg-[#25D366]/10',
+                    )}
+                  >
+                    <MessageCircle className="size-4" aria-hidden="true" />
+                    مراسلة {supervisor.name}
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
         )}
         <Button variant="outline" size="lg" className="h-12 gap-2" onClick={onNewReport}>
           <Plus className="size-4" aria-hidden="true" />

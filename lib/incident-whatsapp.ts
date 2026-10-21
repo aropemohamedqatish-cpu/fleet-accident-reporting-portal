@@ -1,54 +1,82 @@
-import type { Vehicle } from './fleet-data'
-import type { LocationData, SubmissionOutcome } from './report-types'
-import type { ReporterData } from './validation'
+import 'server-only'
 
-export const INCIDENT_SUPERVISORS = [
-  { name: 'المشرف الأول', phone: '963992576455' },
-  { name: 'المشرف الثاني', phone: '963966888943' },
-] as const
+const SUPERVISOR_CONFIG = {
+  '1': {
+    name: 'INCIDENT_SUPERVISOR_1_NAME',
+    phone: 'INCIDENT_SUPERVISOR_1_PHONE',
+    fallbackName: 'المشرف الأول',
+  },
+  '2': {
+    name: 'INCIDENT_SUPERVISOR_2_NAME',
+    phone: 'INCIDENT_SUPERVISOR_2_PHONE',
+    fallbackName: 'المشرف الثاني',
+  },
+} as const
 
-export type IncidentWhatsAppDetails = {
-  outcome: SubmissionOutcome
-  vehicle: Vehicle
-  location: LocationData
-  reporter: ReporterData
-  photoCount: number
+export class IncidentWhatsAppConfigError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'IncidentWhatsAppConfigError'
+  }
 }
 
-export function buildIncidentWhatsAppText({
-  outcome,
-  vehicle,
-  location,
-  reporter,
-  photoCount,
-}: IncidentWhatsAppDetails): string {
-  const locationDetails = location.mode === 'gps'
-    ? [
-        `الإحداثيات: ${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`,
-        `دقة الموقع التقريبية: ${Math.round(location.accuracy)} متر`,
-        `رابط الخريطة: https://www.google.com/maps?q=${location.lat},${location.lng}`,
-      ]
-    : [`الموقع: ${location.description}`]
+export function getIncidentSupervisor(supervisorNumber: string) {
+  if (supervisorNumber !== '1' && supervisorNumber !== '2') {
+    throw new IncidentWhatsAppConfigError('رقم المشرف المحدد غير صالح.')
+  }
 
+  const config = SUPERVISOR_CONFIG[supervisorNumber]
+  const rawPhone = process.env[config.phone]?.trim()
+  if (!rawPhone) {
+    throw new IncidentWhatsAppConfigError(`إعداد رقم ${config.fallbackName} غير موجود على الخادم.`)
+  }
+
+  const phone = rawPhone.replace(/[\s()+.-]/g, '')
+  if (!/^[1-9]\d{7,14}$/.test(phone)) {
+    throw new IncidentWhatsAppConfigError(`إعداد رقم ${config.fallbackName} غير صالح.`)
+  }
+
+  const name = process.env[config.name]?.trim() || config.fallbackName
+  return { name, phone }
+}
+
+type IncidentWhatsAppDetails = {
+  incidentId: string
+  plateNumber: string
+  reporterName: string
+  reporterPhone: string
+  locationDescription: string
+  latitude: number | null
+  longitude: number | null
+  notes: string | null
+  mediaCount: number
+  createdAt: Date
+}
+
+export function buildIncidentWhatsAppUrl(phone: string, incident: IncidentWhatsAppDetails) {
+  const locationDetails =
+    incident.latitude !== null && incident.longitude !== null
+      ? [
+          `الإحداثيات: ${incident.latitude.toFixed(6)}, ${incident.longitude.toFixed(6)}`,
+          `رابط الخريطة: https://www.google.com/maps?q=${incident.latitude},${incident.longitude}`,
+        ]
+      : [`الموقع: ${incident.locationDescription}`]
   const submittedAt = new Intl.DateTimeFormat('ar-SY', {
     dateStyle: 'medium',
     timeStyle: 'short',
     timeZone: 'Asia/Damascus',
-  }).format(new Date(outcome.submittedAt))
-
-  return [
+  }).format(incident.createdAt)
+  const message = [
     'بلاغ حادث أسطول — آروب سورية',
-    `رقم البلاغ: ${outcome.ticketId}`,
-    `رقم اللوحة: ${vehicle.plate}`,
-    `اسم المؤمن له: ${reporter.fullName}`,
-    `رقم الجوال: ${reporter.mobile}`,
+    `رقم البلاغ: ${incident.incidentId}`,
+    `رقم اللوحة: ${incident.plateNumber}`,
+    `اسم المؤمن له: ${incident.reporterName}`,
+    `رقم الجوال: ${incident.reporterPhone}`,
     ...locationDetails,
-    `تفاصيل الحادث: ${reporter.notes}`,
-    `عدد الصور المرفقة: ${photoCount}`,
+    `تفاصيل الحادث: ${incident.notes ?? '—'}`,
+    `عدد المرفقات: ${incident.mediaCount}`,
     `وقت تسجيل البلاغ: ${submittedAt}`,
   ].join('\n')
-}
 
-export function buildIncidentWhatsAppUrl(phone: string, details: IncidentWhatsAppDetails): string {
-  return `https://wa.me/${phone}?text=${encodeURIComponent(buildIncidentWhatsAppText(details))}`
+  return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
 }

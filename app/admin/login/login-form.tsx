@@ -2,11 +2,12 @@
 
 import { useActionState } from 'react'
 import Image from 'next/image'
-import { Loader2, Lock, Mail, ShieldAlert, ShieldCheck } from 'lucide-react'
+import { Loader2, Lock, Mail, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { LoginFeedback } from '@/components/admin/login-feedback'
 import { adminLoginAction } from './actions'
 
 export function AdminLoginForm() {
@@ -34,12 +35,7 @@ export function AdminLoginForm() {
       </CardHeader>
       <CardContent className="p-8">
         <form action={formAction} className="space-y-6">
-          {state?.error && (
-            <div className="flex items-start gap-2.5 rounded-xl border border-red-100 bg-red-50 p-4 text-sm font-medium text-red-800" role="alert" aria-live="polite">
-              <ShieldAlert className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-              {state.error}
-            </div>
-          )}
+          {state?.error && <LoginFeedback kind={state.kind} message={state.error} />}
           <div className="space-y-2">
             <Label htmlFor="email" className="text-xs font-semibold tracking-wide text-slate-900">
               <Mail className="mr-1.5 size-4 text-[#003366]" aria-hidden="true" />
@@ -86,8 +82,6 @@ export function AdminLoginForm() {
           </Button>
           <p className="text-center text-xs leading-6 text-slate-600">
             هذه المنطقة محمية ومخصصة للمشرفين المخوّلين فقط.
-            <br />
-            جميع محاولات الدخول مسجّلة ومراقبة.
           </p>
         </form>
       </CardContent>

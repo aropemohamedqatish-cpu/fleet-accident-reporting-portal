@@ -3,7 +3,8 @@
 import { useRef, useState, type DragEvent } from 'react'
 import { AlertCircle, Camera, ImagePlus, Trash2, UploadCloud } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { ALLOWED_MIME, MAX_IMAGES, MAX_IMAGE_FILE_SIZE, sniffImageMime } from '@/lib/validation'
+import { ALLOWED_MIME, MAX_IMAGES, MAX_IMAGE_FILE_SIZE, MAX_IMAGE_SOURCE_SIZE, sniffImageMime } from '@/lib/validation'
+import { compressIncidentImage } from '@/lib/compress-image'
 import type { MediaItem } from '@/lib/report-types'
 import { StepShell } from './step-shell'
 import { cn } from '@/lib/utils'
@@ -25,27 +26,56 @@ export function StepMedia({ photos, onAdd, onRemove, onBack, onNext }: Props) {
   const galleryRef = useRef<HTMLInputElement>(null)
   const [errors, setErrors] = useState<string[]>([])
   const [dragging, setDragging] = useState(false)
+  const [compressing, setCompressing] = useState(false)
   const remainingPhotos = MAX_IMAGES - photos.length
 
   async function handleImages(files: File[], initialErrors: string[] = []) {
     const nextErrors = [...initialErrors]
     const accepted: MediaItem[] = []
+    setCompressing(true)
 
-    if (files.length > remainingPhotos) {
-      nextErrors.push(`يمكنك إضافة ${remainingPhotos} صور أخرى فقط (الحد الأقصى ${MAX_IMAGES} صور).`)
-    }
+    try {
+      if (files.length > remainingPhotos) {
+        nextErrors.push(`يمكنك إضافة ${remainingPhotos} صور أخرى فقط (الحد الأقصى ${MAX_IMAGES} صور).`)
+      }
 
-    for (const file of files.slice(0, Math.max(remainingPhotos, 0))) {
-      if (file.size === 0 || file.size > MAX_IMAGE_FILE_SIZE) {
-        nextErrors.push(`"${file.name}" يتجاوز الحجم المسموح (10MB للصورة).`)
-        continue
+      for (const file of files.slice(0, Math.max(remainingPhotos, 0))) {
+        if (file.size === 0 || file.size > MAX_IMAGE_SOURCE_SIZE) {
+          nextErrors.push(`"${file.name}" يتجاوز الحجم الأصلي المسموح (30MB للصورة).`)
+          continue
+        }
+        let mime: Awaited<ReturnType<typeof sniffImageMime>>
+        try {
+          mime = await sniffImageMime(file)
+        } catch {
+          nextErrors.push(`تعذّرت قراءة الصورة "${file.name}".`)
+          continue
+        }
+        if (!mime) {
+          nextErrors.push(`"${file.name}" ليس صورة صالحة. الصيغ المسموحة: JPEG, PNG, WebP.`)
+          continue
+        }
+
+        try {
+          const optimized = await compressIncidentImage(file)
+          const optimizedMime = ALLOWED_MIME.find((allowedMime) => allowedMime === optimized.type) ?? mime
+          if (!optimizedMime) {
+            throw new Error('صيغة الصورة الناتجة غير مدعومة.')
+          }
+          accepted.push({
+            id: crypto.randomUUID(),
+            file: optimized,
+            mime: optimizedMime,
+            previewUrl: URL.createObjectURL(optimized),
+          })
+        } catch (error) {
+          nextErrors.push(
+            `"${file.name}": ${error instanceof Error ? error.message : 'تعذّر تجهيز الصورة للإرسال.'}`,
+          )
+        }
       }
-      const mime = await sniffImageMime(file)
-      if (!mime) {
-        nextErrors.push(`"${file.name}" ليس صورة صالحة. الصيغ المسموحة: JPEG, PNG, WebP.`)
-        continue
-      }
-      accepted.push({ id: crypto.randomUUID(), file, mime, previewUrl: URL.createObjectURL(file) })
+    } finally {
+      setCompressing(false)
     }
 
     setErrors(nextErrors)
@@ -55,6 +85,7 @@ export function StepMedia({ photos, onAdd, onRemove, onBack, onNext }: Props) {
   function onDrop(event: DragEvent<HTMLDivElement>) {
     event.preventDefault()
     setDragging(false)
+    if (compressing) return
     const files = Array.from(event.dataTransfer.files)
     const images = files.filter((file) => file.type.startsWith('image/'))
     const errors = images.length !== files.length ? ['يُسمح بإرفاق الصور فقط.'] : []
@@ -67,10 +98,10 @@ export function StepMedia({ photos, onAdd, onRemove, onBack, onNext }: Props) {
   return (
     <StepShell
       title="صور الحادث"
-      description="أرفق صوراً واضحة للأضرار (حتى 10 صور، بحد أقصى 10MB للصورة)."
+      description="تُضغط الصور على جهازك قبل الإرسال مع الحفاظ على وضوح التفاصيل (حتى 10 صور، وبحجم أصلي حتى 30MB للصورة)."
       onBack={onBack}
       onNext={onNext}
-      nextDisabled={photos.length === 0}
+      nextDisabled={photos.length === 0 || compressing}
     >
       <div
         onDragOver={(event) => {
@@ -88,17 +119,17 @@ export function StepMedia({ photos, onAdd, onRemove, onBack, onNext }: Props) {
           <UploadCloud className="size-7" aria-hidden="true" />
         </div>
         <div>
-          <p className="font-semibold">أضف وسائط الحادث</p>
+          <p className="font-semibold">{compressing ? 'جارٍ تجهيز الصور بجودة مناسبة...' : 'أضف صور الحادث'}</p>
           <p className="text-sm text-muted-foreground">
-            {`${photos.length}/${MAX_IMAGES} صور • 10MB كحد أقصى للصورة`}
+            {`${photos.length}/${MAX_IMAGES} صور • الحد الأصلي 30MB للصورة، وتُضغط قبل الرفع للحفاظ على وضوح التفاصيل`}
           </p>
         </div>
         <div className="grid w-full grid-cols-2 gap-3">
-          <Button size="lg" className="h-12 gap-2" onClick={() => cameraRef.current?.click()} disabled={remainingPhotos === 0}>
+          <Button size="lg" className="h-12 gap-2" onClick={() => cameraRef.current?.click()} disabled={remainingPhotos === 0 || compressing}>
             <Camera className="size-5" aria-hidden="true" />
             التقاط صورة
           </Button>
-          <Button size="lg" variant="outline" className="h-12 gap-2" onClick={() => galleryRef.current?.click()} disabled={remainingPhotos === 0}>
+          <Button size="lg" variant="outline" className="h-12 gap-2" onClick={() => galleryRef.current?.click()} disabled={remainingPhotos === 0 || compressing}>
             <ImagePlus className="size-5" aria-hidden="true" />
             صور من المعرض
           </Button>
@@ -108,6 +139,7 @@ export function StepMedia({ photos, onAdd, onRemove, onBack, onNext }: Props) {
           type="file"
           accept={imageAccept}
           capture="environment"
+          disabled={compressing}
           className="sr-only"
           tabIndex={-1}
           aria-hidden="true"
@@ -121,6 +153,7 @@ export function StepMedia({ photos, onAdd, onRemove, onBack, onNext }: Props) {
           type="file"
           accept={imageAccept}
           multiple
+          disabled={compressing}
           className="sr-only"
           tabIndex={-1}
           aria-hidden="true"

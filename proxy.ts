@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { SESSION_COOKIE_NAME, verifySessionToken } from '@/lib/session-token'
+import { shouldRedirectForForcedPasswordChange } from '@/lib/login-validation'
 
 const ADMIN_LOGIN = '/admin/login'
 const ADMIN_HOME = '/admin/dashboard'
@@ -18,7 +19,9 @@ export async function proxy(request: NextRequest) {
   const isLogin = pathname === ADMIN_LOGIN
 
   if (!isLogin && !session) return NextResponse.redirect(new URL(ADMIN_LOGIN, request.url))
-  if (isLogin && session) return NextResponse.redirect(new URL(ADMIN_HOME, request.url))
+  if (session && shouldRedirectForForcedPasswordChange(pathname, session.mustChangePassword)) {
+    return NextResponse.redirect(new URL('/admin/change-password', request.url))
+  }
   return NextResponse.next()
 }
 

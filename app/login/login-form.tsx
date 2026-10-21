@@ -2,11 +2,12 @@
 
 import { useActionState } from 'react'
 import Image from 'next/image'
-import { Loader2, ShieldAlert } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { LoginFeedback } from '@/components/admin/login-feedback'
 import { loginAction } from './actions'
 
 export function LoginForm() {
@@ -28,16 +29,7 @@ export function LoginForm() {
       </CardHeader>
       <CardContent>
         <form action={formAction} className="space-y-5">
-          {state?.error && (
-            <div
-              className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800"
-              role="alert"
-              aria-live="polite"
-            >
-              <ShieldAlert className="size-4 shrink-0" aria-hidden="true" />
-              {state.error}
-            </div>
-          )}
+          {state?.error && <LoginFeedback kind={state.kind} message={state.error} />}
           <div className="space-y-2">
             <Label htmlFor="email">البريد الإلكتروني</Label>
             <Input

@@ -15,6 +15,7 @@ const ROLE_LABELS = { ADMIN: 'مدير النظام', AGENT: 'موظف حواد�
 export default async function ConsoleLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const session = await getSession()
   if (!session) redirect('/admin/login')
+  if (session.mustChangePassword) redirect('/admin/change-password')
 
   const roleLabel = ROLE_LABELS[session.role]
   const initials = initialsOf(session.name)

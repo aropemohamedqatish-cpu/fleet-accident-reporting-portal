@@ -2,11 +2,12 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, UsersRound } from 'lucide-react'
+import { KeyRound, LayoutDashboard, UsersRound } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const NAV_ITEMS = [
   { href: '/admin/dashboard', label: 'الحوادث', hint: 'البلاغات الواردة وحالات المعالجة', icon: LayoutDashboard },
+  { href: '/admin/change-password', label: 'كلمة المرور', hint: 'تحديث كلمة مرور حسابك', icon: KeyRound },
   { href: '/admin/users', label: 'المستخدمون', hint: 'إدارة حسابات الموظفين', icon: UsersRound, adminOnly: true },
 ] as const
 

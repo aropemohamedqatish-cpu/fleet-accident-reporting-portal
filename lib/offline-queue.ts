@@ -5,6 +5,11 @@ export type StagedReport = {
   payload: IncidentPayload
   files: File[]
   stagedAt: string
+  syncError?: {
+    message: string
+    status: number | null
+    failedAt: string
+  }
 }
 
 const DB_NAME = 'arope-fleet-reports'
@@ -26,9 +31,23 @@ async function withStore<T>(mode: IDBTransactionMode, run: (store: IDBObjectStor
   return new Promise<T>((resolve, reject) => {
     const tx = db.transaction(STORE, mode)
     const req = run(tx.objectStore(STORE))
-    req.onsuccess = () => resolve(req.result)
-    req.onerror = () => reject(req.error)
-    tx.oncomplete = () => db.close()
+    let result!: T
+    req.onsuccess = () => {
+      result = req.result
+    }
+    req.onerror = () => reject(req.error ?? new Error('تعذّر الوصول إلى البلاغات المحفوظة.'))
+    tx.oncomplete = () => {
+      db.close()
+      resolve(result)
+    }
+    tx.onerror = () => {
+      db.close()
+      reject(tx.error ?? new Error('تعذّر إتمام عملية حفظ البلاغات.'))
+    }
+    tx.onabort = () => {
+      db.close()
+      reject(tx.error ?? new Error('تم إلغاء عملية حفظ البلاغات.'))
+    }
   })
 }
 
@@ -45,6 +64,10 @@ export function removeStaged(key: string) {
 }
 
 export type SubmitResult = { incidentId: string; replayed: boolean }
+export type OutboxSyncResult = {
+  sent: SubmitResult[]
+  failed: Array<{ idempotencyKey: string; message: string; status: number | null }>
+}
 
 export class IncidentSubmissionError extends Error {
   constructor(
@@ -95,13 +118,35 @@ export async function submitIncident(
   return { incidentId: result.incidentId, replayed: result.replayed }
 }
 
-/** Replays every staged report; the idempotency key guarantees no duplicates server-side. */
-export async function flushOutbox(): Promise<SubmitResult[]> {
+/** Sends each eligible report independently; rejected reports remain visible and do not block later reports. */
+export async function flushOutbox(retryKeys: readonly string[] = []): Promise<OutboxSyncResult> {
   const staged = await listStaged()
-  const results: SubmitResult[] = []
+  const retryKeySet = new Set(retryKeys)
+  const result: OutboxSyncResult = { sent: [], failed: [] }
   for (const item of staged) {
-    results.push(await submitIncident(item.payload, item.idempotencyKey, item.files))
-    await removeStaged(item.idempotencyKey)
+    if (item.syncError && !retryKeySet.has(item.idempotencyKey)) continue
+    try {
+      result.sent.push(await submitIncident(item.payload, item.idempotencyKey, item.files))
+      await removeStaged(item.idempotencyKey)
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'تعذّر إرسال البلاغ. يرجى المحاولة مرة أخرى.'
+      const status = error instanceof IncidentSubmissionError ? error.status : null
+      await stageReport({
+        ...item,
+        syncError: { message, status, failedAt: new Date().toISOString() },
+      })
+      result.failed.push({ idempotencyKey: item.idempotencyKey, message, status })
+
+      if (
+        !(error instanceof IncidentSubmissionError) ||
+        error.status >= 500 ||
+        [408, 425, 429].includes(error.status)
+      ) {
+        break
+      }
+    }
   }
-  return results
+  return result
 }

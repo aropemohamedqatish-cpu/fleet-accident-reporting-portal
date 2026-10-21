@@ -13,7 +13,7 @@ import {
   type TrendPoint,
 } from './admin-claims'
 
-const PAGE_SIZE = 50
+export const INCIDENTS_PAGE_SIZE = 50
 const DAY_MS = 24 * 60 * 60 * 1000
 const TIME_ZONE = 'Asia/Damascus'
 /** Syria observes permanent UTC+3. */
@@ -59,11 +59,13 @@ export async function countIncidents(filters: AdminFilters): Promise<number> {
   return prisma.accident.count({ where: buildWhere(filters) })
 }
 
-export async function getIncidents(filters: AdminFilters): Promise<IncidentRow[]> {
+export async function getIncidents(filters: AdminFilters, page = 1): Promise<IncidentRow[]> {
+  const safePage = Number.isSafeInteger(page) && page > 0 ? page : 1
   const rows = await prisma.accident.findMany({
     where: buildWhere(filters),
     orderBy: { createdAt: 'desc' },
-    take: PAGE_SIZE,
+    skip: (safePage - 1) * INCIDENTS_PAGE_SIZE,
+    take: INCIDENTS_PAGE_SIZE,
     select: {
       id: true,
       idempotencyKey: true,
@@ -185,9 +187,6 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 
   const openWhere: Prisma.AccidentWhereInput = { status: { in: ['SUBMITTED', 'UNDER_REVIEW'] } }
   const referredWhere: Prisma.AccidentWhereInput = { status: { in: ['SENT_TO_INSURER', 'CLOSED'] } }
-  const noMediaWhere: Prisma.AccidentWhereInput = {
-    media: { none: { fileType: { in: ['image/jpeg', 'image/png', 'image/webp'] } } },
-  }
 
   const [
     allTime,
@@ -197,8 +196,6 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     pendingPrevious,
     referredCurrent,
     referredPrevious,
-    missingCurrent,
-    missingPrevious,
     grouped,
     recent,
   ] = await Promise.all([
@@ -209,8 +206,6 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     count(openWhere, previousFrom, currentFrom),
     count(referredWhere, currentFrom, now),
     count(referredWhere, previousFrom, currentFrom),
-    count(noMediaWhere, currentFrom, now),
-    count(noMediaWhere, previousFrom, currentFrom),
     prisma.accident.groupBy({ by: ['status'], _count: { _all: true } }),
     prisma.accident.findMany({ where: { createdAt: { gte: trendFrom } }, select: { createdAt: true } }),
   ])
@@ -228,11 +223,9 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     total: totalCurrent,
     pending: pendingCurrent,
     referred: referredCurrent,
-    missingMedia: missingCurrent,
     totalDelta: delta(totalCurrent, totalPrevious),
     pendingDelta: delta(pendingCurrent, pendingPrevious),
     referredDelta: delta(referredCurrent, referredPrevious),
-    missingMediaDelta: delta(missingCurrent, missingPrevious),
     statusBreakdown,
     trend: buildTrend(now, recent.map((r) => r.createdAt)),
   }

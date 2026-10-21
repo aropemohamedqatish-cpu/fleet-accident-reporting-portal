@@ -18,6 +18,12 @@ enum MediaType {
   VIDEO
 }
 
+enum SecurityEventType {
+  LOGIN_SUCCESS
+  LOGIN_FAILURE
+  LOGIN_RATE_LIMITED
+}
+
 model Vehicle {
   id           String     @id @default(uuid())
   plateNumber  String     @unique
@@ -50,6 +56,9 @@ model Accident {
   auditLogs           AuditLog[]
 
   @@index([assignedToId])
+  @@index([createdAt])
+  @@index([status, createdAt])
+  @@index([vehicleId])
 }
 
 model AccidentMedia {
@@ -62,15 +71,20 @@ model AccidentMedia {
   mediaType    MediaType @default(IMAGE)
   fileSize     Int      
   createdAt    DateTime @default(now())
+
+  @@index([accidentId])
 }
 
 model AdminUser {
-  id           String    @id @default(uuid())
-  email        String    @unique
-  passwordHash String
-  name         String
-  role         AdminRole @default(AGENT)
-  createdAt    DateTime  @default(now())
+  id                 String    @id @default(uuid())
+  email              String    @unique
+  passwordHash       String
+  name               String
+  role               AdminRole @default(AGENT)
+  isActive           Boolean   @default(true)
+  mustChangePassword Boolean   @default(false)
+  sessionVersion     Int       @default(0)
+  createdAt          DateTime  @default(now())
 
   assignedAccidents Accident[] @relation("AccidentAssignment")
   auditLogs         AuditLog[]
@@ -89,5 +103,17 @@ model AuditLog {
 
   @@index([userId])
   @@index([accidentId])
+  @@index([createdAt])
+}
+
+model SecurityEvent {
+  id         String           @id @default(uuid())
+  eventType  SecurityEventType
+  email      String
+  ipAddress  String?
+  createdAt  DateTime         @default(now())
+
+  @@index([email, eventType, createdAt])
+  @@index([ipAddress, eventType, createdAt])
   @@index([createdAt])
 }

@@ -1,4 +1,5 @@
 import { Suspense } from 'react'
+import { redirect } from 'next/navigation'
 import { ShieldCheck } from 'lucide-react'
 import { RefreshButton } from '@/components/dashboard/refresh-button'
 import { ClaimsFilters } from '@/components/admin/claims-filters'
@@ -7,7 +8,7 @@ import { OverviewPanel } from '@/components/admin/overview-panel'
 import { StatsGrid } from '@/components/admin/stats-grid'
 import { PageHeader } from '@/components/shell/page-header'
 import { DEFAULT_FILTERS, type AdminFilters } from '@/lib/admin-claims'
-import { getDashboardStats, getIncidents } from '@/lib/admin-queries'
+import { countIncidents, getDashboardStats, getIncidents, INCIDENTS_PAGE_SIZE } from '@/lib/admin-queries'
 
 const VALID_STATUS = ['ALL', 'SUBMITTED', 'UNDER_REVIEW', 'SENT_TO_INSURER', 'CLOSED'] as const
 
@@ -26,8 +27,27 @@ function parseFilters(params: Record<string, string | string[] | undefined>): Ad
 }
 
 export default async function AdminDashboardPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const filters = parseFilters(await searchParams)
-  const [stats, rows] = await Promise.all([getDashboardStats(), getIncidents(filters)])
+  const params = await searchParams
+  const filters = parseFilters(params)
+  const rawPage = typeof params.page === 'string' ? Number(params.page) : 1
+  const page = Number.isSafeInteger(rawPage) && rawPage > 0 ? rawPage : 1
+  const [stats, filteredTotal] = await Promise.all([getDashboardStats(), countIncidents(filters)])
+  const pageCount = Math.max(1, Math.ceil(filteredTotal / INCIDENTS_PAGE_SIZE))
+  const currentPage = Math.min(page, pageCount)
+  const rows = await getIncidents(filters, currentPage)
+  if (page !== currentPage) {
+    const normalizedQuery = new URLSearchParams()
+    for (const [key, value] of Object.entries(params)) {
+      if (key !== 'page' && typeof value === 'string' && value) normalizedQuery.set(key, value)
+    }
+    normalizedQuery.set('page', String(currentPage))
+    redirect(`/admin/dashboard?${normalizedQuery.toString()}`)
+  }
+  const query = new URLSearchParams()
+  for (const key of ['status', 'from', 'to', 'search']) {
+    const value = params[key]
+    if (typeof value === 'string' && value) query.set(key, value)
+  }
 
   return (
     <div className="space-y-8">
@@ -55,7 +75,14 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
         <ClaimsFilters />
       </Suspense>
 
-      <ClaimsTable rows={rows} total={stats.total} />
+      <ClaimsTable
+        rows={rows}
+        total={stats.total}
+        filteredTotal={filteredTotal}
+        currentPage={currentPage}
+        pageCount={pageCount}
+        filterQuery={query.toString()}
+      />
     </div>
   )
 }

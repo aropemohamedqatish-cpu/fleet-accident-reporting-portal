@@ -3,6 +3,7 @@ import { normalizeDigits } from './fleet-data'
 
 export const MAX_IMAGES = 10
 export const MAX_IMAGE_FILE_SIZE = 10 * 1024 * 1024
+export const MAX_IMAGE_SOURCE_SIZE = 30 * 1024 * 1024
 export const MAX_VIDEOS = 1
 export const MAX_VIDEO_FILE_SIZE = 50 * 1024 * 1024
 export const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp'] as const
