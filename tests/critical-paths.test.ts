@@ -10,6 +10,7 @@ import {
 } from '../lib/login-validation'
 import { incidentPayloadSchema } from '../lib/validation'
 import { classifyLoginFailure, getLoginFailureMessage, getSafeLoginErrorLog } from '../lib/login-error'
+import { verifySessionToken } from '../lib/session-token'
 
 test('incident validation accepts a valid payload and rejects invalid plate and empty media', () => {
   const validPayload = {
@@ -78,6 +79,17 @@ test('login failures distinguish unapplied migrations from database outages with
   const safeLog = getSafeLoginErrorLog(new TypeError('Failed for postgres://user:password@db.example.test/app as admin@example.test'))
   assert.match(safeLog.message ?? '', /Failed for \[database URL\] as \[email\]/)
   assert.doesNotMatch(safeLog.message ?? '', /password|admin@example\.test/)
+})
+
+test('invalid session tokens are rejected when the signing secret is unavailable', async () => {
+  const originalSecret = process.env.JWT_SECRET
+  delete process.env.JWT_SECRET
+  try {
+    assert.equal(await verifySessionToken('invalid-token'), null)
+  } finally {
+    if (originalSecret === undefined) delete process.env.JWT_SECRET
+    else process.env.JWT_SECRET = originalSecret
+  }
 })
 
 test('incident status transitions are sequential and important transitions require confirmation', () => {

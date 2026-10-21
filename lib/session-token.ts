@@ -45,8 +45,8 @@ export async function signSessionToken(session: AdminSession) {
 }
 
 export async function verifySessionToken(token: string): Promise<AdminSession | null> {
-  const key = getSigningKey()
   try {
+    const key = getSigningKey()
     const { payload } = await jwtVerify(token, key, {
       algorithms: ['HS256'],
       issuer: SESSION_ISSUER,
