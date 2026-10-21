@@ -45,7 +45,7 @@ export function StepMedia({ photos, onAdd, onRemove, onBack, onNext }: Props) {
         nextErrors.push(`"${file.name}" ليس صورة صالحة. الصيغ المسموحة: JPEG, PNG, WebP.`)
         continue
       }
-      accepted.push({ id: crypto.randomUUID(), file, mime, kind: 'image', previewUrl: URL.createObjectURL(file) })
+      accepted.push({ id: crypto.randomUUID(), file, mime, previewUrl: URL.createObjectURL(file) })
     }
 
     setErrors(nextErrors)

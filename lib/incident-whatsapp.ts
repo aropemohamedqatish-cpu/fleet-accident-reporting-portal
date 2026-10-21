@@ -40,7 +40,7 @@ export function buildIncidentWhatsAppText({
     'بلاغ حادث أسطول — آروب سورية',
     `رقم البلاغ: ${outcome.ticketId}`,
     `رقم اللوحة: ${vehicle.plate}`,
-    `اسم المبلّغ: ${reporter.fullName}`,
+    `اسم المؤمن له: ${reporter.fullName}`,
     `رقم الجوال: ${reporter.mobile}`,
     ...locationDetails,
     `تفاصيل الحادث: ${reporter.notes}`,

@@ -48,7 +48,7 @@ export function ClaimsSearchInput() {
           type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="اسم السائق، رقم الجوال، أو أرقام اللوحة…"
+          placeholder="اسم المؤمن له، رقم الجوال، أو أرقام اللوحة…"
           className="h-13 ps-12 pe-12 text-base [&::-webkit-search-cancel-button]:hidden"
         />
         <div className="absolute inset-y-0 end-3 flex items-center gap-1">

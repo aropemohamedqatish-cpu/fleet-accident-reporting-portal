@@ -44,7 +44,7 @@ export function IncidentActionsPanel({ incident }: { incident: IncidentDetail })
           >
             <PhoneCall className="size-4" aria-hidden="true" />
             <span dir="ltr" className="font-mono">{incident.reporterPhone}</span>
-            <span>— اتصال بالسائق</span>
+            <span>— اتصال بالمؤمن له</span>
           </a>
         </CardContent>
       </Card>

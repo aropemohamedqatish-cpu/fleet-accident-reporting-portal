@@ -56,12 +56,13 @@ export async function PATCH(request: NextRequest, ctx: RouteContext) {
   ) {
     return NextResponse.json({ error: 'يجب تحديد موظف صالح لإسناد البلاغ إليه.' }, { status: 400 })
   }
+  const assignedToId = body.assignedToId
 
   try {
     const result = await prisma.$transaction(async (tx) => {
       const [actor, target, accidents] = await Promise.all([
         tx.adminUser.findUnique({ where: { id: session.userId }, select: { id: true, name: true } }),
-        tx.adminUser.findUnique({ where: { id: body.assignedToId }, select: { id: true, name: true } }),
+        tx.adminUser.findUnique({ where: { id: assignedToId }, select: { id: true, name: true } }),
         tx.$queryRaw<Array<{ id: string; assignedToId: string | null }>>`
           SELECT "id", "assignedToId" FROM "Accident" WHERE "id" = ${accidentId}
         `,

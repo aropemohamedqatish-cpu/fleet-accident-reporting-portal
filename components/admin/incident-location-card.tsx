@@ -39,7 +39,7 @@ export function IncidentLocationCard({ incident }: { incident: IncidentDetail })
         <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
           <p className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-600">
             <FileText className="size-3.5" aria-hidden="true" />
-            وصف الحادث من السائق
+            وصف الحادث من المؤمن له
           </p>
           {incident.notes ? (
             <p className="text-sm leading-7 whitespace-pre-wrap text-slate-700">{incident.notes}</p>

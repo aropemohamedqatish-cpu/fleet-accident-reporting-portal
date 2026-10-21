@@ -53,7 +53,7 @@ export function StepDetails({ values, onChange, onBack, onSubmit, submitting, on
 
   return (
     <StepShell
-      title="بيانات السائق"
+      title="بيانات المؤمن له"
       description="راجع بياناتك قبل الإرسال. سيتواصل معك فريق الحوادث على الرقم المدخل."
       onBack={onBack}
       onNext={handleSubmit}

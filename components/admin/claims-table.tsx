@@ -70,7 +70,7 @@ export function ClaimsTable({ rows, total }: { rows: IncidentRow[]; total: numbe
                     <TableRow>
                       <TableHead>المرجع</TableHead>
                       <TableHead>رقم اللوحة</TableHead>
-                      <TableHead>السائق</TableHead>
+                      <TableHead>المؤمن له ووسيلة التواصل</TableHead>
                       <TableHead>وقت التسجيل</TableHead>
                       <TableHead>المرفقات</TableHead>
                       <TableHead>الحالة</TableHead>

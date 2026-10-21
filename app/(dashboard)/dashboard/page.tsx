@@ -86,7 +86,7 @@ export default async function DashboardPage() {
               <TableRow className="bg-slate-50/80 hover:bg-slate-50/80">
                 <TableHead className="h-12 px-5 text-right text-xs font-semibold text-slate-500">رقم البلاغ</TableHead>
                 <TableHead className="h-12 text-right text-xs font-semibold text-slate-500">المركبة</TableHead>
-                <TableHead className="h-12 text-right text-xs font-semibold text-slate-500">اسم المبلّغ</TableHead>
+                <TableHead className="h-12 text-right text-xs font-semibold text-slate-500">اسم المؤمن له</TableHead>
                 <TableHead className="h-12 text-right text-xs font-semibold text-slate-500">تاريخ البلاغ</TableHead>
                 <TableHead className="h-12 text-right text-xs font-semibold text-slate-500">المرفقات</TableHead>
                 <TableHead className="h-12 px-5 text-right text-xs font-semibold text-slate-500">الحالة</TableHead>

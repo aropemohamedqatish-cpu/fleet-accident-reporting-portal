@@ -66,7 +66,7 @@ export function IncidentHero({ incident }: { incident: IncidentDetail }) {
                 <CopyRefButton value={incident.id} label="نسخ المعرف الكامل" />
               </p>
               <p className="mt-1 text-sm text-[#b4c8e8]">
-                السائق المُبلِّغ: <span className="font-semibold text-white">{incident.reporterName}</span>
+                المؤمن له: <span className="font-semibold text-white">{incident.reporterName}</span>
               </p>
               <div className="mt-5">
                 <PlateBadge plate={incident.plateNumber} size="md" />

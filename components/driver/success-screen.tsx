@@ -106,7 +106,7 @@ export function SuccessScreen(props: Props) {
         </dl>
         <dl className="mt-4 grid gap-3 border-t pt-4 text-sm">
           <div>
-            <dt className="text-muted-foreground">اسم المبلّغ</dt>
+            <dt className="text-muted-foreground">اسم المؤمن له</dt>
             <dd className="mt-1 font-semibold text-foreground">{reporter.fullName}</dd>
           </div>
           <div>

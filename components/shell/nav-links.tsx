@@ -18,7 +18,7 @@ function useActive() {
 export function SidebarNav({ role }: { role: 'ADMIN' | 'AGENT' }) {
   const isActive = useActive()
   return (
-    <nav aria-label="التنقل الرئيسي" className="flex flex-col gap-1.5 px-4">
+    <nav aria-label="التنقل الرئيسي" className="flex flex-col gap-2 px-4">
       {NAV_ITEMS.filter((item) => !('adminOnly' in item) || role === 'ADMIN').map(({ href, label, hint, icon: Icon }) => {
         const active = isActive(href)
         return (
@@ -27,24 +27,24 @@ export function SidebarNav({ role }: { role: 'ADMIN' | 'AGENT' }) {
             href={href}
             aria-current={active ? 'page' : undefined}
             className={cn(
-              'group relative flex items-center gap-3.5 rounded-2xl px-4 py-3.5 outline-none transition-all duration-200 focus-visible:ring-4 focus-visible:ring-white/30',
+              'group relative flex items-center gap-3.5 rounded-2xl px-3.5 py-3 outline-none transition-all duration-200 focus-visible:ring-4 focus-visible:ring-white/30',
               active
-                ? 'bg-white/14 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.16)]'
-                : 'text-[#dbe6f7] hover:bg-white/8 hover:text-white',
+                ? 'bg-white text-brand shadow-[0_8px_20px_-12px_rgba(0,0,0,0.8)]'
+                : 'text-[#dbe6f7] hover:bg-white/10 hover:text-white',
             )}
           >
-            {active && <span aria-hidden="true" className="absolute inset-y-3 start-0 w-1 rounded-full bg-[#7fb0ff]" />}
+            {active && <span aria-hidden="true" className="absolute inset-y-3 start-0 w-1 rounded-full bg-[#1d5fb8]" />}
             <span
               className={cn(
                 'flex size-10 shrink-0 items-center justify-center rounded-xl transition-colors',
-                active ? 'bg-white text-brand' : 'bg-white/10 text-white group-hover:bg-white/18',
+                active ? 'bg-brand text-white' : 'bg-white/10 text-white group-hover:bg-white/15',
               )}
             >
               <Icon className="size-5" aria-hidden="true" />
             </span>
             <span className="flex min-w-0 flex-col">
-              <span className="text-[15px] font-bold">{label}</span>
-              <span className="truncate text-xs font-medium text-[#b4c8e8]">{hint}</span>
+              <span className="text-sm font-extrabold">{label}</span>
+              <span className={cn('truncate text-xs font-medium', active ? 'text-slate-600' : 'text-[#b4c8e8]')}>{hint}</span>
             </span>
           </Link>
         )

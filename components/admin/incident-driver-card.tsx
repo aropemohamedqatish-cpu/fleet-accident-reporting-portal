@@ -10,7 +10,7 @@ export function IncidentDriverCard({ incident }: { incident: IncidentDetail }) {
           <span className="flex size-9 items-center justify-center rounded-xl bg-[#003366]/10 text-[#003366]">
             <User className="size-5" aria-hidden="true" />
           </span>
-          بيانات السائق المُبلِّغ
+          بيانات المؤمن له
         </CardTitle>
       </CardHeader>
       <CardContent className="px-6 py-4">

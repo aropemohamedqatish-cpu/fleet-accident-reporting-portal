@@ -35,7 +35,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
       `المعرف الكامل: ${incident.id}`,
       `رقم اللوحة: ${incident.plateNumber}`,
       `الحالة: ${STATUS_LABELS[incident.status] ?? incident.status}`,
-      `السائق: ${incident.reporterName}`,
+      `المؤمن له: ${incident.reporterName}`,
       `الجوال: ${incident.reporterPhone}`,
       `وقت التسجيل: ${formatDateTime(incident.createdAt)}`,
       `آخر تحديث: ${formatDateTime(incident.updatedAt)}`,
