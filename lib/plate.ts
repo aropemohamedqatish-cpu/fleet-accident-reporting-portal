@@ -49,3 +49,45 @@ export function splitPlate(plate: string): { prefix: string; serial: string } {
 export function isCompletePlate(plate: string): boolean {
   return getPlateSearchCandidates(plate).length > 0
 }
+
+/** Legacy plates are 6 digits grouped as a 2-digit prefix + 4-digit serial. */
+export const LEGACY_PREFIX_LENGTH = 2
+export const LEGACY_DIGIT_COUNT = LEGACY_PREFIX_LENGTH + 4
+
+/** Modern plates contain 7 digits split into two groups: 2 or 3 + 4 or 5. */
+export const MODERN_DIGIT_COUNT = 7
+
+/** How many digits go into the FIRST modern input cell. */
+export const MODERN_CELL1_MIN_DIGITS = 2
+export const MODERN_CELL1_MAX_DIGITS = 3
+export const MODERN_CELL2_MIN_DIGITS = MODERN_DIGIT_COUNT - MODERN_CELL1_MAX_DIGITS
+export const MODERN_CELL2_MAX_DIGITS = MODERN_DIGIT_COUNT - MODERN_CELL1_MIN_DIGITS
+
+/** Returns the modern-grouped plate `12/34567` for a raw 7-digit string. */
+export function formatModernPlate(digits: string): string {
+  if (digits.length !== MODERN_DIGIT_COUNT) return digits
+  return `${digits.slice(0, 2)}/${digits.slice(2)}`
+}
+
+/** Returns the modern input cell lengths for the current digit count (2-3 / remainder). */
+export function getModernCellLengths(totalDigits: number): [number, number] {
+  if (totalDigits <= 0) return [0, 0]
+  const cell1 = Math.min(totalDigits, MODERN_CELL1_MAX_DIGITS)
+  return [cell1, totalDigits - cell1]
+}
+
+/** Returns whether a modern plate has a 2- or 3-digit prefix and exactly 7 digits. */
+export function isCompleteModernPlate(value: string): boolean {
+  const parts = normalizePlateInput(value).split('/')
+  if (parts.length !== 2) return false
+  const [prefix, serial] = parts
+  return (
+    [MODERN_CELL1_MIN_DIGITS, MODERN_CELL1_MAX_DIGITS].includes(prefix.length) &&
+    serial.length === MODERN_DIGIT_COUNT - prefix.length
+  )
+}
+
+/** Returns whether an input value is a complete legacy plate (6 digits). */
+export function isCompleteLegacyPlate(value: string): boolean {
+  return getPlateDigitCount(value) === LEGACY_DIGIT_COUNT
+}

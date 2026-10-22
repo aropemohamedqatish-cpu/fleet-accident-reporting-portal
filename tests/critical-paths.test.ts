@@ -11,7 +11,12 @@ import {
 import { incidentPayloadSchema } from '../lib/validation'
 import { classifyLoginFailure, getLoginFailureMessage, getSafeLoginErrorLog } from '../lib/login-error'
 import { verifySessionToken } from '../lib/session-token'
-import { getPlateSearchCandidates, normalizeDigits, normalizePlateInput } from '../lib/plate'
+import {
+  getPlateSearchCandidates,
+  isCompleteModernPlate,
+  normalizeDigits,
+  normalizePlateInput,
+} from '../lib/plate'
 import { getServerEnvironmentIssues } from '../lib/server-env'
 import { prisma } from '../lib/prisma'
 import { checkApiRateLimit } from '../lib/api-rate-limit'
@@ -28,6 +33,11 @@ test('plate normalization accepts six or seven digits and tries supported slash 
   assert.deepEqual(getPlateSearchCandidates('1/200145'), ['12/00145', '120/0145', '1200145'])
   assert.deepEqual(getPlateSearchCandidates('12345'), [])
   assert.deepEqual(getPlateSearchCandidates('12001456'), [])
+  assert.equal(isCompleteModernPlate('12/34567'), true)
+  assert.equal(isCompleteModernPlate('123/4567'), true)
+  assert.equal(isCompleteModernPlate('122/8001'), true)
+  assert.equal(isCompleteModernPlate('1/234567'), false)
+  assert.equal(isCompleteModernPlate('12/3456'), false)
 })
 
 test('incident validation accepts a valid payload and rejects invalid plate and empty media', () => {
@@ -45,6 +55,18 @@ test('incident validation accepts a valid payload and rejects invalid plate and 
   }
 
   assert.equal(incidentPayloadSchema.safeParse(validPayload).success, true)
+  assert.equal(
+    incidentPayloadSchema.safeParse({
+      ...validPayload,
+      plate: '12/8100',
+      governorate: 'DAMASCUS',
+    }).success,
+    true,
+  )
+  assert.equal(
+    incidentPayloadSchema.safeParse({ ...validPayload, plate: '123/4567', governorate: undefined }).success,
+    true,
+  )
   assert.equal(incidentPayloadSchema.safeParse({ ...validPayload, plate: '12345' }).success, false)
   assert.equal(incidentPayloadSchema.safeParse({ ...validPayload, governorate: 'NOT_A_GOVERNORATE' }).success, false)
   assert.equal(incidentPayloadSchema.safeParse({ ...validPayload, photos: [] }).success, false)

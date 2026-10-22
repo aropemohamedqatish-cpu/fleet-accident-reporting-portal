@@ -6,11 +6,10 @@ import { toast } from 'sonner'
 import { IncidentSubmissionError, submitIncident } from '@/lib/incident-submission'
 import type { LocationData, MediaItem, SubmissionOutcome, Vehicle } from '@/lib/report-types'
 import type { IncidentPayload, ReporterData, ReporterInput } from '@/lib/validation'
-import { normalizePlateInput } from '@/lib/plate'
 import type { SyrianGovernorate } from '@/lib/syrian-governorates'
 import { WelcomeScreen } from './welcome-screen'
 import { StepIndicator } from './step-indicator'
-import { StepVehicle } from './step-vehicle'
+import { StepVehicle, type VehicleStepMode } from './step-vehicle'
 import { StepLocation } from './step-location'
 import { StepMedia } from './step-media'
 import { StepDetails } from './step-details'
@@ -22,6 +21,7 @@ const EMPTY_REPORTER: ReporterInput = { fullName: '', mobile: '', notes: '' }
 export function DriverPortal() {
   const [step, setStep] = useState<Step>(0)
   const [plate, setPlate] = useState('')
+  const [plateMode, setPlateMode] = useState<VehicleStepMode>('legacy')
   const [governorate, setGovernorate] = useState<SyrianGovernorate | ''>('')
   const [vehicle, setVehicle] = useState<Vehicle | null>(null)
   const [location, setLocation] = useState<LocationData | null>(null)
@@ -55,6 +55,7 @@ export function DriverPortal() {
   function resetReport() {
     photos.forEach((item) => URL.revokeObjectURL(item.previewUrl))
     setPlate('')
+    setPlateMode('legacy')
     setGovernorate('')
     setVehicle(null)
     setLocation(null)
@@ -119,8 +120,10 @@ export function DriverPortal() {
           <StepVehicle
             plate={plate}
             governorate={governorate}
+            mode={plateMode}
+            onModeChange={setPlateMode}
             onPlateChange={(value) => {
-              setPlate(normalizePlateInput(value))
+              setPlate(value)
               setVehicle(null)
             }}
             onGovernorateChange={(value) => {

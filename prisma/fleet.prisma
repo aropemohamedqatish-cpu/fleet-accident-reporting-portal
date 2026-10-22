@@ -1,0 +1,12 @@
+/// Fleet vehicles that incidents can be reported against.
+model Vehicle {
+  id          String     @id @default(uuid()) @map("id")
+  plateNumber String     @unique @map("plate_number")
+  governorate String?    @map("governorate")
+  isActive    Boolean    @default(true) @map("is_active")
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  accidents   Accident[]
+
+  @@index([governorate], name: "idx_vehicles_governorate")
+  @@map("vehicles")
+}

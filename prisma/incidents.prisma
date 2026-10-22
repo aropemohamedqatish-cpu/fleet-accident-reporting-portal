@@ -1,0 +1,55 @@
+enum MediaType {
+  IMAGE
+  VIDEO
+
+  @@map("media_type")
+}
+
+/// An incident (accident) report submitted by a driver/insured person.
+model Accident {
+  id                  String          @id @default(uuid()) @map("id")
+  idempotencyKey      String          @unique @map("idempotency_key")
+  requestHash         String          @map("request_hash")
+  vehicleId           String          @map("vehicle_id")
+  vehicle             Vehicle         @relation(fields: [vehicleId], references: [id])
+  governorate         String?         @map("governorate")
+
+  reporterName        String          @map("reporter_name")
+  reporterPhone       String          @map("reporter_phone")
+  locationDescription String          @map("location_description")
+  latitude            Float?          @map("latitude")
+  longitude           Float?          @map("longitude")
+  notes               String?         @map("notes")
+
+  /// SUBMITTED | UNDER_REVIEW | SENT_TO_INSURER | CLOSED (validated in application code).
+  status              String          @default("SUBMITTED") @map("status")
+  createdAt           DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  assignedToId        String?         @map("assigned_to_id")
+  assignedTo          AdminUser?      @relation("AccidentAssignment", fields: [assignedToId], references: [id], onDelete: SetNull)
+  media               AccidentMedia[]
+  auditLogs           AuditLog[]
+
+  @@index([assignedToId], name: "idx_accidents_assigned_to_id")
+  @@index([createdAt], name: "idx_accidents_created_at")
+  @@index([status, createdAt], name: "idx_accidents_status_created_at")
+  @@index([vehicleId], name: "idx_accidents_vehicle_id")
+  @@map("accidents")
+}
+
+/// Files (photos/videos) attached to an incident.
+model AccidentMedia {
+  id         String    @id @default(uuid()) @map("id")
+  accidentId String    @map("accident_id")
+  accident   Accident  @relation(fields: [accidentId], references: [id])
+
+  fileUrl    String    @map("file_url")
+  fileType   String    @map("file_type")
+  mediaType  MediaType @default(IMAGE) @map("media_type")
+  fileSize   Int       @map("file_size")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([accidentId], name: "idx_accident_media_accident_id")
+  @@map("accident_media")
+}

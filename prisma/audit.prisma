@@ -1,0 +1,39 @@
+enum SecurityEventType {
+  LOGIN_SUCCESS
+  LOGIN_FAILURE
+  LOGIN_RATE_LIMITED
+
+  @@map("security_event_type")
+}
+
+/// Who did what on an incident (status changes, reassignment, ...).
+model AuditLog {
+  id         String    @id @default(uuid()) @map("id")
+  userId     String    @map("user_id")
+  user       AdminUser @relation(fields: [userId], references: [id], onDelete: Restrict)
+  accidentId String    @map("accident_id")
+  accident   Accident  @relation(fields: [accidentId], references: [id], onDelete: Restrict)
+  actionType String    @map("action_type")
+  details    String    @map("details")
+  ipAddress  String    @map("ip_address")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([userId], name: "idx_audit_logs_user_id")
+  @@index([accidentId], name: "idx_audit_logs_accident_id")
+  @@index([createdAt], name: "idx_audit_logs_created_at")
+  @@map("audit_logs")
+}
+
+/// Login attempts, used for brute-force rate limiting.
+model SecurityEvent {
+  id        String            @id @default(uuid()) @map("id")
+  eventType SecurityEventType @map("event_type")
+  email     String            @map("email")
+  ipAddress String?           @map("ip_address")
+  createdAt DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([email, eventType, createdAt], name: "idx_security_events_email_event_created")
+  @@index([ipAddress, eventType, createdAt], name: "idx_security_events_ip_event_created")
+  @@index([createdAt], name: "idx_security_events_created_at")
+  @@map("security_events")
+}

@@ -1,0 +1,10 @@
+/// Fixed-window counters for the public API rate limiter.
+model ApiRateLimitBucket {
+  key             String   @id @map("key")
+  windowStartedAt DateTime @map("window_started_at") @db.Timestamptz(3)
+  requestCount    Int      @map("request_count")
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([updatedAt], name: "idx_api_rate_limit_buckets_updated_at")
+  @@map("api_rate_limit_buckets")
+}

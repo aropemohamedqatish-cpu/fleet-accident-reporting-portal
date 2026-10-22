@@ -1,0 +1,24 @@
+enum AdminRole {
+  AGENT
+  ADMIN
+
+  @@map("admin_role")
+}
+
+/// Back-office accounts (insurance staff / system administrators).
+model AdminUser {
+  id                 String     @id @default(uuid()) @map("id")
+  email              String     @unique @map("email")
+  passwordHash       String     @map("password_hash")
+  name               String     @map("name")
+  role               AdminRole  @default(AGENT) @map("role")
+  isActive           Boolean    @default(true) @map("is_active")
+  mustChangePassword Boolean    @default(false) @map("must_change_password")
+  sessionVersion     Int        @default(0) @map("session_version")
+  createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  assignedAccidents  Accident[] @relation("AccidentAssignment")
+  auditLogs          AuditLog[]
+
+  @@map("admin_users")
+}

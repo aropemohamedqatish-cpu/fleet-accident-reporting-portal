@@ -237,23 +237,31 @@ export async function POST(request: Request) {
       where: {
         plateNumber: { in: plateCandidates },
         isActive: true,
-        OR: [{ governorate: parsed.data.governorate }, { governorate: null }],
+        ...(parsed.data.governorate
+          ? { OR: [{ governorate: parsed.data.governorate }, { governorate: null }] }
+          : {}),
       },
       select: { id: true, plateNumber: true, governorate: true },
     })
-    const vehicle =
-      plateCandidates
-        .map((candidate) =>
-          vehicles.find((item) => item.plateNumber === candidate && item.governorate === parsed.data.governorate),
-        )
-        .find((item) => item !== undefined) ??
-      plateCandidates
-        .map((candidate) => vehicles.find((item) => item.plateNumber === candidate && item.governorate === null))
-        .find((item) => item !== undefined)
+    const vehicle = parsed.data.governorate
+      ? plateCandidates
+          .map((candidate) =>
+            vehicles.find(
+              (item) => item.plateNumber === candidate && item.governorate === parsed.data.governorate,
+            ),
+          )
+          .find((item) => item !== undefined) ??
+        plateCandidates
+          .map((candidate) => vehicles.find((item) => item.plateNumber === candidate && item.governorate === null))
+          .find((item) => item !== undefined)
+      : plateCandidates
+          .map((candidate) => vehicles.find((item) => item.plateNumber === candidate))
+          .find((item) => item !== undefined)
     if (!vehicle) {
       return errorResponse('رقم اللوحة غير مسجل أو أن المحافظة لا تطابق بيانات المركبة.', 400)
     }
 
+    const incidentGovernorate = parsed.data.governorate ?? vehicle.governorate
     const accidentId = randomUUID()
     const safePlateDirectory = parsed.data.plate.replace(/\D/g, '')
     const incidentDirectory = path.join(
@@ -281,15 +289,17 @@ export async function POST(request: Request) {
       )
 
       const created = await prisma.$transaction(async (tx) => {
-        await tx.vehicle.updateMany({
-          where: { id: vehicle.id, governorate: null },
-          data: { governorate: parsed.data.governorate },
-        })
+        if (incidentGovernorate) {
+          await tx.vehicle.updateMany({
+            where: { id: vehicle.id, governorate: null },
+            data: { governorate: incidentGovernorate },
+          })
+        }
         const currentVehicle = await tx.vehicle.findUnique({
           where: { id: vehicle.id },
           select: { governorate: true },
         })
-        if (currentVehicle?.governorate !== parsed.data.governorate) return false
+        if (currentVehicle?.governorate !== incidentGovernorate) return false
 
         await tx.accident.create({
           data: {
@@ -297,7 +307,7 @@ export async function POST(request: Request) {
             idempotencyKey: key,
             requestHash,
             vehicleId: vehicle.id,
-            governorate: parsed.data.governorate,
+            governorate: incidentGovernorate,
             reporterName: parsed.data.reporter.fullName,
             reporterPhone: parsed.data.reporter.mobile,
             locationDescription:

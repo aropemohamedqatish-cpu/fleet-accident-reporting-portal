@@ -7,7 +7,7 @@ export type LocationData =
 
 export type Vehicle = {
   plate: string
-  governorate: SyrianGovernorate
+  governorate: SyrianGovernorate | null
 }
 
 export type MediaItem = {

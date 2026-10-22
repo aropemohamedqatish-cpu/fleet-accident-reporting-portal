@@ -46,7 +46,7 @@ export const incidentPayloadSchema = z.object({
     .min(6, 'رقم اللوحة يجب أن يحتوي على 6 أو 7 أرقام.')
     .max(32, 'صيغة رقم اللوحة غير صالحة.')
     .refine((value) => getPlateSearchCandidates(value).length > 0, 'رقم اللوحة يجب أن يحتوي على 6 أو 7 أرقام بصيغة صحيحة.'),
-  governorate: z.enum(SYRIAN_GOVERNORATE_VALUES, { error: 'يرجى اختيار المحافظة.' }),
+  governorate: z.enum(SYRIAN_GOVERNORATE_VALUES, { error: 'يرجى اختيار المحافظة.' }).nullable().optional(),
   location: z.discriminatedUnion('mode', [
     z.object({
       mode: z.literal('gps'),

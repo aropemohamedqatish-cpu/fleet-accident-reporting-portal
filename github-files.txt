@@ -1,2 +1,0 @@
-c:\Users\MQATISH\Desktop\fleet-accident-reporting-portal\.github\workflows
-c:\Users\MQATISH\Desktop\fleet-accident-reporting-portal\.github\workflows\ci.yml

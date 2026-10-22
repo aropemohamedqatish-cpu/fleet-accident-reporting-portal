@@ -1,0 +1,348 @@
+$ prisma generate && next dev
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma.
+
+✔ Generated Prisma Client (v7.10.1) to .\node_modules\.prisma\client in 96ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.4.0 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.2.27:3000
+- Environments: .env
+✓ Ready in 524ms
+✓ Running next.config.mjs took 31ms
+
+[browser] ./lib/api-rate-limit.ts:72:5
+Error: Unterminated template
+  70 |           )))::INTEGER
+  71 |         ) AS "retryAfterSeconds"`
+> 72 |     `
+     |     ^
+> 73 |
+     | ^
+> 74 |     if (!bucket) {
+     | ^^^^^^^^^^^^^^^^^^
+> 75 |       console.warn('[rate-limit] counter not returned, allowing request (fail open)')
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 76 |       return { allowed: true }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 77 |     }
+     | ^^^^^
+> 78 |
+     | ^
+> 79 |     return bucket.requestCount > MAX_REQUESTS_PER_WINDOW
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 80 |       ? { allowed: false, retryAfterSeconds: bucket.retryAfterSeconds }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 81 |       : { allowed: true }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 82 |   } catch (error) {
+     | ^^^^^^^^^^^^^^^^^^^
+> 83 |     console.error('[rate-limit] unexpected error, allowing request (fail open).', error)
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 84 |     return { allowed: true }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 85 |   }
+     | ^^^
+> 86 | }
+     | ^
+
+Parsing ecmascript source code failed
+
+Import trace:
+  App Route:
+    ./lib/api-rate-limit.ts
+    ./app/api/vehicles/route.ts 
+[browser] ./lib/api-rate-limit.ts:72:5
+Error: Unterminated template
+  70 |           )))::INTEGER
+  71 |         ) AS "retryAfterSeconds"`
+> 72 |     `
+     |     ^
+> 73 |
+     | ^
+> 74 |     if (!bucket) {
+     | ^^^^^^^^^^^^^^^^^^
+> 75 |       console.warn('[rate-limit] counter not returned, allowing request (fail open)')
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 76 |       return { allowed: true }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 77 |     }
+     | ^^^^^
+> 78 |
+     | ^
+> 79 |     return bucket.requestCount > MAX_REQUESTS_PER_WINDOW
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 80 |       ? { allowed: false, retryAfterSeconds: bucket.retryAfterSeconds }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 81 |       : { allowed: true }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 82 |   } catch (error) {
+     | ^^^^^^^^^^^^^^^^^^^
+> 83 |     console.error('[rate-limit] unexpected error, allowing request (fail open).', error)
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 84 |     return { allowed: true }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 85 |   }
+     | ^^^
+> 86 | }
+     | ^
+
+Parsing ecmascript source code failed
+
+Import trace:
+  App Route:
+    ./lib/api-rate-limit.ts
+    ./app/api/vehicles/route.ts 
+[browser] ./lib/api-rate-limit.ts:72:5
+Error: Unterminated template
+  70 |           )))::INTEGER
+  71 |         ) AS "retryAfterSeconds"`
+> 72 |     `
+     |     ^
+> 73 |
+     | ^
+> 74 |     if (!bucket) {
+     | ^^^^^^^^^^^^^^^^^^
+> 75 |       console.warn('[rate-limit] counter not returned, allowing request (fail open)')
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 76 |       return { allowed: true }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 77 |     }
+     | ^^^^^
+> 78 |
+     | ^
+> 79 |     return bucket.requestCount > MAX_REQUESTS_PER_WINDOW
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 80 |       ? { allowed: false, retryAfterSeconds: bucket.retryAfterSeconds }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 81 |       : { allowed: true }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 82 |   } catch (error) {
+     | ^^^^^^^^^^^^^^^^^^^
+> 83 |     console.error('[rate-limit] unexpected error, allowing request (fail open).', error)
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 84 |     return { allowed: true }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 85 |   }
+     | ^^^
+> 86 | }
+     | ^
+
+Parsing ecmascript source code failed
+
+Import trace:
+  App Route:
+    ./lib/api-rate-limit.ts
+    ./app/api/vehicles/route.ts 
+[browser] ./lib/api-rate-limit.ts:72:5
+Error: Unterminated template
+  70 |           )))::INTEGER
+  71 |         ) AS "retryAfterSeconds"`
+> 72 |     `
+     |     ^
+> 73 |
+     | ^
+> 74 |     if (!bucket) {
+     | ^^^^^^^^^^^^^^^^^^
+> 75 |       console.warn('[rate-limit] counter not returned, allowing request (fail open)')
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 76 |       return { allowed: true }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 77 |     }
+     | ^^^^^
+> 78 |
+     | ^
+> 79 |     return bucket.requestCount > MAX_REQUESTS_PER_WINDOW
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 80 |       ? { allowed: false, retryAfterSeconds: bucket.retryAfterSeconds }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 81 |       : { allowed: true }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 82 |   } catch (error) {
+     | ^^^^^^^^^^^^^^^^^^^
+> 83 |     console.error('[rate-limit] unexpected error, allowing request (fail open).', error)
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 84 |     return { allowed: true }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 85 |   }
+     | ^^^
+> 86 | }
+     | ^
+
+Parsing ecmascript source code failed
+
+Import trace:
+  App Route:
+    ./lib/api-rate-limit.ts
+    ./app/api/vehicles/route.ts 
+[browser] ./lib/api-rate-limit.ts:72:5
+Error: Unterminated template
+  70 |           )))::INTEGER
+  71 |         ) AS "retryAfterSeconds"`
+> 72 |     `
+     |     ^
+> 73 |
+     | ^
+> 74 |     if (!bucket) {
+     | ^^^^^^^^^^^^^^^^^^
+> 75 |       console.warn('[rate-limit] counter not returned, allowing request (fail open)')
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 76 |       return { allowed: true }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 77 |     }
+     | ^^^^^
+> 78 |
+     | ^
+> 79 |     return bucket.requestCount > MAX_REQUESTS_PER_WINDOW
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 80 |       ? { allowed: false, retryAfterSeconds: bucket.retryAfterSeconds }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 81 |       : { allowed: true }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 82 |   } catch (error) {
+     | ^^^^^^^^^^^^^^^^^^^
+> 83 |     console.error('[rate-limit] unexpected error, allowing request (fail open).', error)
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 84 |     return { allowed: true }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 85 |   }
+     | ^^^
+> 86 | }
+     | ^
+
+Parsing ecmascript source code failed
+
+Import trace:
+  App Route:
+    ./lib/api-rate-limit.ts
+    ./app/api/vehicles/route.ts 
+[browser] ./lib/api-rate-limit.ts:72:5
+Error: Unterminated template
+  70 |           )))::INTEGER
+  71 |         ) AS "retryAfterSeconds"`
+> 72 |     `
+     |     ^
+> 73 |
+     | ^
+> 74 |     if (!bucket) {
+     | ^^^^^^^^^^^^^^^^^^
+> 75 |       console.warn('[rate-limit] counter not returned, allowing request (fail open)')
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 76 |       return { allowed: true }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 77 |     }
+     | ^^^^^
+> 78 |
+     | ^
+> 79 |     return bucket.requestCount > MAX_REQUESTS_PER_WINDOW
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 80 |       ? { allowed: false, retryAfterSeconds: bucket.retryAfterSeconds }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 81 |       : { allowed: true }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 82 |   } catch (error) {
+     | ^^^^^^^^^^^^^^^^^^^
+> 83 |     console.error('[rate-limit] unexpected error, allowing request (fail open).', error)
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 84 |     return { allowed: true }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 85 |   }
+     | ^^^
+> 86 | }
+     | ^
+
+Parsing ecmascript source code failed
+
+Import trace:
+  App Route:
+    ./lib/api-rate-limit.ts
+    ./app/api/vehicles/route.ts 
+[browser] ./lib/api-rate-limit.ts:72:5
+Error: Unterminated template
+  70 |           )))::INTEGER
+  71 |         ) AS "retryAfterSeconds"`
+> 72 |     `
+     |     ^
+> 73 |
+     | ^
+> 74 |     if (!bucket) {
+     | ^^^^^^^^^^^^^^^^^^
+> 75 |       console.warn('[rate-limit] counter not returned, allowing request (fail open)')
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 76 |       return { allowed: true }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 77 |     }
+     | ^^^^^
+> 78 |
+     | ^
+> 79 |     return bucket.requestCount > MAX_REQUESTS_PER_WINDOW
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 80 |       ? { allowed: false, retryAfterSeconds: bucket.retryAfterSeconds }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 81 |       : { allowed: true }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 82 |   } catch (error) {
+     | ^^^^^^^^^^^^^^^^^^^
+> 83 |     console.error('[rate-limit] unexpected error, allowing request (fail open).', error)
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 84 |     return { allowed: true }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 85 |   }
+     | ^^^
+> 86 | }
+     | ^
+
+Parsing ecmascript source code failed
+
+Import trace:
+  App Route:
+    ./lib/api-rate-limit.ts
+    ./app/api/vehicles/route.ts 
+[browser] ./lib/api-rate-limit.ts:72:5
+Error: Unterminated template
+  70 |           )))::INTEGER
+  71 |         ) AS "retryAfterSeconds"`
+> 72 |     `
+     |     ^
+> 73 |
+     | ^
+> 74 |     if (!bucket) {
+     | ^^^^^^^^^^^^^^^^^^
+> 75 |       console.warn('[rate-limit] counter not returned, allowing request (fail open)')
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 76 |       return { allowed: true }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 77 |     }
+     | ^^^^^
+> 78 |
+     | ^
+> 79 |     return bucket.requestCount > MAX_REQUESTS_PER_WINDOW
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 80 |       ? { allowed: false, retryAfterSeconds: bucket.retryAfterSeconds }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 81 |       : { allowed: true }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 82 |   } catch (error) {
+     | ^^^^^^^^^^^^^^^^^^^
+> 83 |     console.error('[rate-limit] unexpected error, allowing request (fail open).', error)
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 84 |     return { allowed: true }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 85 |   }
+     | ^^^
+> 86 | }
+     | ^
+
+Parsing ecmascript source code failed
+
+Import trace:
+  App Route:
+    ./lib/api-rate-limit.ts
+    ./app/api/vehicles/route.ts 
+ GET / 200 in 463ms (next.js: 53ms, application-code: 410ms)
+ GET /admin/login 200 in 1716ms (next.js: 1417ms, proxy.ts: 125ms, application-code: 174ms)
+^C^C

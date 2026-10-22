@@ -89,13 +89,37 @@ async function main() {
   console.log("⏳ بدأت عملية إدخال بيانات الأسطول وحساب الإدارة...");
   await withDatabaseRetry("فحص اتصال قاعدة البيانات", () => prisma.$queryRaw`SELECT 1`);
 
-  const prefixes = ["12", "61"];
-  const vehicles = prefixes.flatMap((prefix) =>
-    Array.from({ length: 200 }, (_, index) => ({
-      plateNumber: `${prefix}${String(index + 1).padStart(5, "0")}`,
+  const governorates = [
+    "DAMASCUS",
+    "RIF_DIMASHQ",
+    "ALEPPO",
+    "HOMS",
+    "HAMA",
+    "LATTAKIA",
+    "TARTUS",
+    "IDLIB",
+    "DEIR_EZ_ZOR",
+    "RAQQA",
+    "HASAKAH",
+    "DARAA",
+    "SUWAYDA",
+    "QUNEITRA",
+  ];
+  const vehicles = governorates.flatMap((governorate, index) => [
+    {
+      plateNumber: `12/${String(8100 + index).padStart(4, "0")}`,
       isActive: true,
-    })),
-  );
+      governorate,
+    },
+    {
+      plateNumber:
+        index % 2 === 0
+          ? `61/${String(8001 + index).padStart(5, "0")}`
+          : `${121 + index}/${String(8000 + index).padStart(4, "0")}`,
+      isActive: true,
+      governorate: null,
+    },
+  ]);
 
   let insertedVehicles = 0;
   for (let offset = 0; offset < vehicles.length; offset += VEHICLE_BATCH_SIZE) {

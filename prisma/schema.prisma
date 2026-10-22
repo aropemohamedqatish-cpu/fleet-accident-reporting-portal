@@ -1,3 +1,17 @@
+// ============================================================================
+// Prisma entry point (generator + datasource only).
+//
+// The data model is split by domain under prisma/models/*.prisma:
+//   fleet.prisma      vehicles
+//   incidents.prisma  accidents, accident_media
+//   admin.prisma      admin_users
+//   audit.prisma      audit_logs, security_events
+//   system.prisma     api_rate_limit_buckets
+//
+// Naming conventions (see docs/database.md):
+//   - Prisma client : PascalCase models, camelCase fields  (prisma.accident.reporterName)
+//   - PostgreSQL    : plural snake_case tables, snake_case columns/enums, via @@map / @map
+// ============================================================================
 
 generator client {
   provider = "prisma-client-js"
@@ -6,127 +20,4 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-}
-
-enum AdminRole {
-  AGENT
-  ADMIN
-}
-
-enum MediaType {
-  IMAGE
-  VIDEO
-}
-
-enum SecurityEventType {
-  LOGIN_SUCCESS
-  LOGIN_FAILURE
-  LOGIN_RATE_LIMITED
-}
-
-model Vehicle {
-  id           String     @id @default(uuid())
-  plateNumber  String     @unique
-  governorate  String?
-  isActive     Boolean    @default(true)
-  createdAt    DateTime   @default(now())
-  accidents    Accident[]
-
-  @@index([governorate])
-}
-
-model Accident {
-  id                  String         @id @default(uuid())
-  idempotencyKey      String         @unique
-  requestHash         String
-  vehicleId           String
-  vehicle             Vehicle        @relation(fields: [vehicleId], references: [id])
-  governorate         String?
-  
-  reporterName        String
-  reporterPhone       String
-  locationDescription String
-  latitude            Float?
-  longitude           Float?
-  notes               String?
-  
-  status              String         @default("SUBMITTED")
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
-  
-  media               AccidentMedia[]
-  assignedToId        String?
-  assignedTo          AdminUser?      @relation("AccidentAssignment", fields: [assignedToId], references: [id], onDelete: SetNull)
-  auditLogs           AuditLog[]
-
-  @@index([assignedToId])
-  @@index([createdAt])
-  @@index([status, createdAt])
-  @@index([vehicleId])
-}
-
-model AccidentMedia {
-  id           String   @id @default(uuid())
-  accidentId   String
-  accident     Accident @relation(fields: [accidentId], references: [id])
-  
-  fileUrl      String   
-  fileType     String   
-  mediaType    MediaType @default(IMAGE)
-  fileSize     Int      
-  createdAt    DateTime @default(now())
-
-  @@index([accidentId])
-}
-
-model AdminUser {
-  id                 String    @id @default(uuid())
-  email              String    @unique
-  passwordHash       String
-  name               String
-  role               AdminRole @default(AGENT)
-  isActive           Boolean   @default(true)
-  mustChangePassword Boolean   @default(false)
-  sessionVersion     Int       @default(0)
-  createdAt          DateTime  @default(now())
-
-  assignedAccidents Accident[] @relation("AccidentAssignment")
-  auditLogs         AuditLog[]
-}
-
-model AuditLog {
-  id         String     @id @default(uuid())
-  userId     String
-  user       AdminUser  @relation(fields: [userId], references: [id], onDelete: Restrict)
-  accidentId String
-  accident   Accident   @relation(fields: [accidentId], references: [id], onDelete: Restrict)
-  actionType String
-  details    String
-  ipAddress  String
-  createdAt  DateTime   @default(now())
-
-  @@index([userId])
-  @@index([accidentId])
-  @@index([createdAt])
-}
-
-model SecurityEvent {
-  id         String           @id @default(uuid())
-  eventType  SecurityEventType
-  email      String
-  ipAddress  String?
-  createdAt  DateTime         @default(now())
-
-  @@index([email, eventType, createdAt])
-  @@index([ipAddress, eventType, createdAt])
-  @@index([createdAt])
-}
-
-model ApiRateLimitBucket {
-  key              String   @id
-  windowStartedAt  DateTime
-  requestCount     Int
-  updatedAt        DateTime @updatedAt
-
-  @@index([updatedAt])
 }
