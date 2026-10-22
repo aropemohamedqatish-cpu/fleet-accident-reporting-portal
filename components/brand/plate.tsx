@@ -10,13 +10,13 @@ const SIZES: Record<PlateSize, { box: string; strip: string; text: string }> = {
 }
 
 type PlateBadgeProps = {
-  /** Full 7-digit plate, e.g. "1200001". */
+  /** Formatted or legacy unformatted fleet plate. */
   plate: string
   size?: PlateSize
   className?: string
 }
 
-/** Renders a Syrian fleet plate: 2 leading digits · 5-digit serial, always left-to-right. */
+/** Renders a Syrian fleet plate with its stored prefix and serial, left-to-right. */
 export function PlateBadge({ plate, size = 'md', className }: PlateBadgeProps) {
   const { prefix, serial } = splitPlate(plate)
   const s = SIZES[size]

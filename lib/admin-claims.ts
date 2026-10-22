@@ -68,6 +68,7 @@ export type IncidentMedia = {
 }
 
 export type IncidentDetail = IncidentRow & {
+  governorate: string | null
   locationDescription: string
   latitude: number | null
   longitude: number | null

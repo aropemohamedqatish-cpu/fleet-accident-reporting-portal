@@ -1,6 +1,7 @@
 import { CalendarDays, Phone, User } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatDateTime, formatRelative, type IncidentDetail } from '@/lib/admin-claims'
+import { getGovernorateLabel } from '@/lib/syrian-governorates'
 
 export function IncidentDriverCard({ incident }: { incident: IncidentDetail }) {
   return (
@@ -14,7 +15,11 @@ export function IncidentDriverCard({ incident }: { incident: IncidentDetail }) {
         </CardTitle>
       </CardHeader>
       <CardContent className="px-6 py-4">
-        <dl className="grid gap-4 sm:grid-cols-3">
+        <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-2xl bg-slate-50 p-4">
+            <dt className="text-xs font-semibold text-slate-500">المحافظة</dt>
+            <dd className="mt-1 font-bold text-slate-900">{getGovernorateLabel(incident.governorate)}</dd>
+          </div>
           <div className="rounded-2xl bg-slate-50 p-4">
             <dt className="text-xs font-semibold text-slate-500">الاسم الكامل</dt>
             <dd className="mt-1 font-bold text-slate-900">{incident.reporterName}</dd>

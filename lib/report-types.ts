@@ -1,4 +1,5 @@
 import type { AllowedMime } from './validation'
+import type { SyrianGovernorate } from './syrian-governorates'
 
 export type LocationData =
   | { mode: 'gps'; lat: number; lng: number; accuracy: number }
@@ -6,6 +7,7 @@ export type LocationData =
 
 export type Vehicle = {
   plate: string
+  governorate: SyrianGovernorate
 }
 
 export type MediaItem = {

@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { resolveIdempotency } from '@/lib/idempotency'
 import { checkApiRateLimit } from '@/lib/api-rate-limit'
+import { getPlateSearchCandidates } from '@/lib/plate'
 import {
   incidentPayloadSchema,
   ALLOWED_VIDEO_MIME,
@@ -231,25 +232,40 @@ export async function POST(request: Request) {
     const priorResponse = await findIdempotentResponse(key, requestHash)
     if (priorResponse) return priorResponse
 
-    const vehicle = await prisma.vehicle.findFirst({
-      where: { plateNumber: parsed.data.plate, isActive: true },
-      select: { id: true },
+    const plateCandidates = getPlateSearchCandidates(parsed.data.plate)
+    const vehicles = await prisma.vehicle.findMany({
+      where: {
+        plateNumber: { in: plateCandidates },
+        isActive: true,
+        OR: [{ governorate: parsed.data.governorate }, { governorate: null }],
+      },
+      select: { id: true, plateNumber: true, governorate: true },
     })
+    const vehicle =
+      plateCandidates
+        .map((candidate) =>
+          vehicles.find((item) => item.plateNumber === candidate && item.governorate === parsed.data.governorate),
+        )
+        .find((item) => item !== undefined) ??
+      plateCandidates
+        .map((candidate) => vehicles.find((item) => item.plateNumber === candidate && item.governorate === null))
+        .find((item) => item !== undefined)
     if (!vehicle) {
-      return errorResponse('رقم اللوحة غير مسجل أو أن المركبة غير مفعّلة في الأسطول.', 400)
+      return errorResponse('رقم اللوحة غير مسجل أو أن المحافظة لا تطابق بيانات المركبة.', 400)
     }
 
     const accidentId = randomUUID()
+    const safePlateDirectory = parsed.data.plate.replace(/\D/g, '')
     const incidentDirectory = path.join(
       process.cwd(),
       'public',
       'uploads',
       'incidents',
-      parsed.data.plate,
+      safePlateDirectory,
       accidentId,
     )
     for (const item of media) {
-      item.url = `/uploads/incidents/${parsed.data.plate}/${accidentId}/${item.id}${EXTENSIONS[item.mime]}`
+      item.url = `/uploads/incidents/${safePlateDirectory}/${accidentId}/${item.id}${EXTENSIONS[item.mime]}`
     }
 
     try {
@@ -264,13 +280,24 @@ export async function POST(request: Request) {
         ),
       )
 
-      await prisma.$transaction(async (tx) =>
-        tx.accident.create({
+      const created = await prisma.$transaction(async (tx) => {
+        await tx.vehicle.updateMany({
+          where: { id: vehicle.id, governorate: null },
+          data: { governorate: parsed.data.governorate },
+        })
+        const currentVehicle = await tx.vehicle.findUnique({
+          where: { id: vehicle.id },
+          select: { governorate: true },
+        })
+        if (currentVehicle?.governorate !== parsed.data.governorate) return false
+
+        await tx.accident.create({
           data: {
             id: accidentId,
             idempotencyKey: key,
             requestHash,
             vehicleId: vehicle.id,
+            governorate: parsed.data.governorate,
             reporterName: parsed.data.reporter.fullName,
             reporterPhone: parsed.data.reporter.mobile,
             locationDescription:
@@ -290,8 +317,14 @@ export async function POST(request: Request) {
             },
           },
           select: { id: true },
-        }),
-      )
+        })
+        return true
+      })
+
+      if (!created) {
+        await rm(incidentDirectory, { recursive: true, force: true })
+        return errorResponse('المحافظة المحددة لا تطابق بيانات المركبة. يرجى التحقق من رقم اللوحة.', 409)
+      }
 
       return NextResponse.json({ incidentId: accidentId, replayed: false }, { status: 201 })
     } catch (error) {

@@ -4,14 +4,21 @@ import { useEffect, useId, useState } from 'react'
 import { AlertCircle, CheckCircle2, LoaderCircle, XCircle } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { sanitizePlateInput } from '@/lib/plate'
+import { getPlateDigitCount, normalizePlateInput } from '@/lib/plate'
 import type { Vehicle } from '@/lib/report-types'
+import {
+  isSyrianGovernorate,
+  SYRIAN_GOVERNORATES,
+  type SyrianGovernorate,
+} from '@/lib/syrian-governorates'
 import { StepShell } from './step-shell'
 import { cn } from '@/lib/utils'
 
 type Props = {
   plate: string
+  governorate: string
   onPlateChange: (value: string) => void
+  onGovernorateChange: (value: SyrianGovernorate | '') => void
   onVehicleVerified: (vehicle: Vehicle | null) => void
   onBack: () => void
   onNext: () => void
@@ -19,10 +26,20 @@ type Props = {
 
 type VerificationState = 'idle' | 'incomplete' | 'checking' | 'valid' | 'invalid' | 'error'
 
-export function StepVehicle({ plate, onPlateChange, onVehicleVerified, onBack, onNext }: Props) {
+export function StepVehicle({
+  plate,
+  governorate,
+  onPlateChange,
+  onGovernorateChange,
+  onVehicleVerified,
+  onBack,
+  onNext,
+}: Props) {
   const inputId = useId()
+  const governorateId = useId()
   const feedbackId = useId()
-  const digits = sanitizePlateInput(plate)
+  const normalizedPlate = normalizePlateInput(plate)
+  const digitCount = getPlateDigitCount(plate)
   const [verification, setVerification] = useState<VerificationState>('idle')
   const [errorMessage, setErrorMessage] = useState('')
   const [verifiedPlate, setVerifiedPlate] = useState<string | null>(null)
@@ -31,8 +48,10 @@ export function StepVehicle({ plate, onPlateChange, onVehicleVerified, onBack, o
     onVehicleVerified(null)
     setErrorMessage('')
     setVerifiedPlate(null)
-    if (digits.length !== 7) {
-      setVerification(digits.length > 0 ? 'incomplete' : 'idle')
+    if (digitCount < 6 || digitCount > 7 || !governorate) {
+      setVerification(digitCount > 7 ? 'invalid' : digitCount > 0 ? 'incomplete' : 'idle')
+      if (digitCount > 7) setErrorMessage('رقم اللوحة يجب أن يحتوي على 6 أو 7 أرقام فقط.')
+      else if (digitCount >= 6 && !governorate) setErrorMessage('يرجى اختيار المحافظة أولاً.')
       return
     }
 
@@ -40,7 +59,8 @@ export function StepVehicle({ plate, onPlateChange, onVehicleVerified, onBack, o
     setVerification('checking')
     const timeout = window.setTimeout(async () => {
       try {
-        const response = await fetch(`/api/vehicles?plate=${encodeURIComponent(digits)}`, {
+        const params = new URLSearchParams({ plate: normalizedPlate, governorate })
+        const response = await fetch(`/api/vehicles?${params.toString()}`, {
           signal: controller.signal,
           cache: 'no-store',
         })
@@ -50,10 +70,13 @@ export function StepVehicle({ plate, onPlateChange, onVehicleVerified, onBack, o
           typeof result === 'object' &&
           result !== null &&
           'plate' in result &&
-          result.plate === digits
+          typeof result.plate === 'string' &&
+          'governorate' in result &&
+          result.governorate === governorate &&
+          isSyrianGovernorate(governorate)
         ) {
-          onVehicleVerified({ plate: digits })
-          setVerifiedPlate(digits)
+          onVehicleVerified({ plate: result.plate, governorate })
+          setVerifiedPlate(normalizedPlate)
           setVerification('valid')
           return
         }
@@ -79,9 +102,9 @@ export function StepVehicle({ plate, onPlateChange, onVehicleVerified, onBack, o
       window.clearTimeout(timeout)
       controller.abort()
     }
-  }, [digits, onVehicleVerified])
+  }, [digitCount, governorate, normalizedPlate, onVehicleVerified])
 
-  const isVerified = verification === 'valid' && verifiedPlate === digits
+  const isVerified = verification === 'valid' && verifiedPlate === normalizedPlate
   const showError = verification === 'invalid' || verification === 'error'
 
   return (
@@ -93,7 +116,26 @@ export function StepVehicle({ plate, onPlateChange, onVehicleVerified, onBack, o
       nextDisabled={!isVerified}
     >
       <div className="flex flex-col gap-2">
-        <Label htmlFor={inputId} className="text-base">
+        <Label htmlFor={governorateId} className="text-base">
+          المحافظة
+        </Label>
+        <select
+          id={governorateId}
+          value={governorate}
+          onChange={(event) => {
+            const value = event.target.value
+            onGovernorateChange(isSyrianGovernorate(value) ? value : '')
+          }}
+          aria-describedby={feedbackId}
+          className="h-12 rounded-xl border border-input bg-white px-3 text-base text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <option value="">اختر المحافظة</option>
+          {SYRIAN_GOVERNORATES.map(({ value, label }) => (
+            <option key={value} value={value}>{label}</option>
+          ))}
+        </select>
+
+        <Label htmlFor={inputId} className="mt-2 text-base">
           رقم لوحة المركبة
         </Label>
         <div
@@ -105,14 +147,13 @@ export function StepVehicle({ plate, onPlateChange, onVehicleVerified, onBack, o
         >
           <Input
             id={inputId}
-            inputMode="numeric"
+            inputMode="text"
             autoComplete="off"
             autoFocus
             dir="ltr"
-            maxLength={10}
-            placeholder="1200145"
+            placeholder="12/00145 أو 120/0145"
             value={plate}
-            onChange={(e) => onPlateChange(e.target.value)}
+            onChange={(e) => onPlateChange(normalizePlateInput(e.target.value))}
             aria-invalid={showError || undefined}
             aria-describedby={feedbackId}
             className="h-16 rounded-lg border-0 bg-transparent text-center text-3xl font-bold tracking-[0.3em] text-[#003366] placeholder:text-[#003366]/20 tabular-nums shadow-none focus-visible:ring-0"
@@ -143,13 +184,15 @@ export function StepVehicle({ plate, onPlateChange, onVehicleVerified, onBack, o
           )}
           {verification === 'incomplete' && (
             <p className="text-sm font-medium leading-6 text-slate-700">
-              أدخل رقم اللوحة المكوّن من 7 أرقام للتحقق من تسجيله ضمن أسطول الشركة.
-            </p>
+                {digitCount >= 6 && !governorate
+                  ? 'اختر المحافظة من القائمة لمتابعة التحقق.'
+                  : 'أدخل 6 أو 7 أرقام، ويمكن الفصل بينها بشرطة أو أي رمز؛ سيُستخدم تنسيق الشرطة المائلة للبحث.'}
+              </p>
           )}
           {verification === 'idle' && (
-            <p className="text-sm font-medium leading-6 text-slate-700">
-              أدخل رقم اللوحة المكوّن من 7 أرقام للتحقق من تسجيله ضمن أسطول الشركة.
-            </p>
+              <p className="text-sm font-medium leading-6 text-slate-700">
+                اختر المحافظة وأدخل 6 أو 7 أرقام للتحقق من المركبة.
+              </p>
           )}
         </div>
       </div>

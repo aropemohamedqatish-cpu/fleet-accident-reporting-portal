@@ -11,20 +11,29 @@ import {
 import { incidentPayloadSchema } from '../lib/validation'
 import { classifyLoginFailure, getLoginFailureMessage, getSafeLoginErrorLog } from '../lib/login-error'
 import { verifySessionToken } from '../lib/session-token'
-import { normalizeDigits, sanitizePlateInput } from '../lib/plate'
+import { getPlateSearchCandidates, normalizeDigits, normalizePlateInput } from '../lib/plate'
 import { getServerEnvironmentIssues } from '../lib/server-env'
 import { prisma } from '../lib/prisma'
 import { checkApiRateLimit } from '../lib/api-rate-limit'
 
-test('plate input normalization handles Arabic digits without a local fleet cache', () => {
+test('plate normalization accepts six or seven digits and tries supported slash formats', () => {
   assert.equal(normalizeDigits('١٢٠٠١٤٥'), '1200145')
-  assert.equal(sanitizePlateInput('١٢-٠٠١٤٥'), '1200145')
-  assert.equal(sanitizePlateInput('1200145xyz'), '1200145')
+  assert.equal(normalizePlateInput('١٢-٠٠١٤٥'), '12/00145')
+  assert.equal(normalizePlateInput('120*0145'), '120/0145')
+  assert.deepEqual(getPlateSearchCandidates('1200145'), ['12/00145', '120/0145', '1200145'])
+  assert.deepEqual(getPlateSearchCandidates('١٢-٠٠١٤٥'), ['12/00145', '120/0145', '1200145'])
+  assert.deepEqual(getPlateSearchCandidates('12/0145'), ['12/0145', '120/145', '120145'])
+  assert.deepEqual(getPlateSearchCandidates('120.145'), ['120/145', '12/0145', '120145'])
+  assert.deepEqual(getPlateSearchCandidates('12abc00145'), ['12/00145', '120/0145', '1200145'])
+  assert.deepEqual(getPlateSearchCandidates('1/200145'), ['12/00145', '120/0145', '1200145'])
+  assert.deepEqual(getPlateSearchCandidates('12345'), [])
+  assert.deepEqual(getPlateSearchCandidates('12001456'), [])
 })
 
 test('incident validation accepts a valid payload and rejects invalid plate and empty media', () => {
   const validPayload = {
-    plate: '1200145',
+    plate: '12/00145',
+    governorate: 'DAMASCUS',
     location: { mode: 'manual', description: 'تقاطع شارع رئيسي' },
     reporter: {
       fullName: 'محمد خالد قطيش',
@@ -36,7 +45,8 @@ test('incident validation accepts a valid payload and rejects invalid plate and 
   }
 
   assert.equal(incidentPayloadSchema.safeParse(validPayload).success, true)
-  assert.equal(incidentPayloadSchema.safeParse({ ...validPayload, plate: 'ABC' }).success, false)
+  assert.equal(incidentPayloadSchema.safeParse({ ...validPayload, plate: '12345' }).success, false)
+  assert.equal(incidentPayloadSchema.safeParse({ ...validPayload, governorate: 'NOT_A_GOVERNORATE' }).success, false)
   assert.equal(incidentPayloadSchema.safeParse({ ...validPayload, photos: [] }).success, false)
   assert.equal(
     incidentPayloadSchema.safeParse({

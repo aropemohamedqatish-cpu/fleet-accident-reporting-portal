@@ -7,6 +7,7 @@ import { Button, buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { LocationData, SubmissionOutcome, Vehicle } from '@/lib/report-types'
 import type { ReporterData } from '@/lib/validation'
+import { getGovernorateLabel } from '@/lib/syrian-governorates'
 
 type Props = {
   outcome: SubmissionOutcome
@@ -86,6 +87,10 @@ export function SuccessScreen(props: Props) {
           <div>
             <dt className="text-muted-foreground">رقم اللوحة</dt>
             <dd className="font-semibold tabular-nums">{vehicle.plate}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">المحافظة</dt>
+            <dd className="font-semibold">{getGovernorateLabel(vehicle.governorate)}</dd>
           </div>
           <div>
             <dt className="text-muted-foreground">الحالة</dt>

@@ -6,7 +6,8 @@ import { toast } from 'sonner'
 import { IncidentSubmissionError, submitIncident } from '@/lib/incident-submission'
 import type { LocationData, MediaItem, SubmissionOutcome, Vehicle } from '@/lib/report-types'
 import type { IncidentPayload, ReporterData, ReporterInput } from '@/lib/validation'
-import { sanitizePlateInput } from '@/lib/plate'
+import { normalizePlateInput } from '@/lib/plate'
+import type { SyrianGovernorate } from '@/lib/syrian-governorates'
 import { WelcomeScreen } from './welcome-screen'
 import { StepIndicator } from './step-indicator'
 import { StepVehicle } from './step-vehicle'
@@ -21,6 +22,7 @@ const EMPTY_REPORTER: ReporterInput = { fullName: '', mobile: '', notes: '' }
 export function DriverPortal() {
   const [step, setStep] = useState<Step>(0)
   const [plate, setPlate] = useState('')
+  const [governorate, setGovernorate] = useState<SyrianGovernorate | ''>('')
   const [vehicle, setVehicle] = useState<Vehicle | null>(null)
   const [location, setLocation] = useState<LocationData | null>(null)
   const [manualText, setManualText] = useState('')
@@ -53,6 +55,7 @@ export function DriverPortal() {
   function resetReport() {
     photos.forEach((item) => URL.revokeObjectURL(item.previewUrl))
     setPlate('')
+    setGovernorate('')
     setVehicle(null)
     setLocation(null)
     setManualText('')
@@ -71,7 +74,8 @@ export function DriverPortal() {
     idempotencyKey.current ??= crypto.randomUUID()
     const key = idempotencyKey.current
     const payload: IncidentPayload = {
-      plate: sanitizePlateInput(plate),
+      plate: vehicle.plate,
+      governorate: vehicle.governorate,
       location,
       reporter: data,
       photos: photos.map((photo) => ({ name: photo.file.name, size: photo.file.size, type: photo.mime })),
@@ -114,8 +118,13 @@ export function DriverPortal() {
         {step === 1 && (
           <StepVehicle
             plate={plate}
+            governorate={governorate}
             onPlateChange={(value) => {
-              setPlate(value)
+              setPlate(normalizePlateInput(value))
+              setVehicle(null)
+            }}
+            onGovernorateChange={(value) => {
+              setGovernorate(value)
               setVehicle(null)
             }}
             onVehicleVerified={setVehicle}

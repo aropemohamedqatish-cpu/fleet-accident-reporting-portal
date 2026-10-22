@@ -1,5 +1,6 @@
 import { z } from 'zod'
-import { normalizeDigits } from './plate'
+import { getPlateSearchCandidates, normalizeDigits } from './plate'
+import { SYRIAN_GOVERNORATE_VALUES } from './syrian-governorates'
 
 export const MAX_IMAGES = 10
 export const MAX_IMAGE_FILE_SIZE = 10 * 1024 * 1024
@@ -39,7 +40,13 @@ export type ReporterInput = z.input<typeof reporterSchema>
 export type ReporterData = z.output<typeof reporterSchema>
 
 export const incidentPayloadSchema = z.object({
-  plate: z.string().regex(/^\d{7}$/, 'رقم اللوحة يجب أن يتكون من 7 أرقام'),
+  plate: z
+    .string()
+    .trim()
+    .min(6, 'رقم اللوحة يجب أن يحتوي على 6 أو 7 أرقام.')
+    .max(32, 'صيغة رقم اللوحة غير صالحة.')
+    .refine((value) => getPlateSearchCandidates(value).length > 0, 'رقم اللوحة يجب أن يحتوي على 6 أو 7 أرقام بصيغة صحيحة.'),
+  governorate: z.enum(SYRIAN_GOVERNORATE_VALUES, { error: 'يرجى اختيار المحافظة.' }),
   location: z.discriminatedUnion('mode', [
     z.object({
       mode: z.literal('gps'),

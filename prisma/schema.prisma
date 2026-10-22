@@ -27,9 +27,12 @@ enum SecurityEventType {
 model Vehicle {
   id           String     @id @default(uuid())
   plateNumber  String     @unique
+  governorate  String?
   isActive     Boolean    @default(true)
   createdAt    DateTime   @default(now())
   accidents    Accident[]
+
+  @@index([governorate])
 }
 
 model Accident {
@@ -38,6 +41,7 @@ model Accident {
   requestHash         String
   vehicleId           String
   vehicle             Vehicle        @relation(fields: [vehicleId], references: [id])
+  governorate         String?
   
   reporterName        String
   reporterPhone       String

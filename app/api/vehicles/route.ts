@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { checkApiRateLimit } from '@/lib/api-rate-limit'
-import { normalizeDigits } from '@/lib/plate'
+import { getPlateSearchCandidates } from '@/lib/plate'
 import { prisma } from '@/lib/prisma'
+import { isSyrianGovernorate } from '@/lib/syrian-governorates'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -29,22 +30,39 @@ export async function GET(request: Request) {
     )
   }
 
-  const plate = normalizeDigits(new URL(request.url).searchParams.get('plate') ?? '')
-  if (!/^\d{7}$/.test(plate)) {
-    return NextResponse.json({ error: 'رقم اللوحة غير صالح.' }, { status: 400 })
+  const searchParams = new URL(request.url).searchParams
+  const plate = searchParams.get('plate') ?? ''
+  const governorate = searchParams.get('governorate') ?? ''
+  const candidates = getPlateSearchCandidates(plate)
+  if (candidates.length === 0) {
+    return NextResponse.json({ error: 'أدخل رقم لوحة من 6 أو 7 أرقام، ويمكن الفصل بينها بأي رمز.' }, { status: 400 })
+  }
+  if (!isSyrianGovernorate(governorate)) {
+    return NextResponse.json({ error: 'يرجى اختيار المحافظة من القائمة.' }, { status: 400 })
   }
 
   try {
-    const vehicle = await prisma.vehicle.findUnique({
-      where: { plateNumber: plate },
-      select: { plateNumber: true, isActive: true },
+    const vehicles = await prisma.vehicle.findMany({
+      where: {
+        plateNumber: { in: candidates },
+        isActive: true,
+        OR: [{ governorate }, { governorate: null }],
+      },
+      select: { plateNumber: true, governorate: true },
     })
-    if (!vehicle || !vehicle.isActive) {
+    const vehicle =
+      candidates
+      .map((candidate) => vehicles.find((item) => item.plateNumber === candidate && item.governorate === governorate))
+      .find((item) => item !== undefined) ??
+      candidates
+      .map((candidate) => vehicles.find((item) => item.plateNumber === candidate && item.governorate === null))
+      .find((item) => item !== undefined)
+    if (!vehicle) {
       return NextResponse.json({ error: 'رقم اللوحة غير مسجل أو أن المركبة غير مفعّلة.' }, { status: 404 })
     }
 
     return NextResponse.json(
-      { plate: vehicle.plateNumber },
+      { plate: vehicle.plateNumber, governorate },
       { headers: { 'Cache-Control': 'no-store, max-age=0' } },
     )
   } catch (error) {
