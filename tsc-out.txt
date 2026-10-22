@@ -1,0 +1,2 @@
+tests/critical-paths.test.ts(127,15): error TS2540: Cannot assign to 'NODE_ENV' because it is a read-only property.
+tests/critical-paths.test.ts(134,17): error TS2540: Cannot assign to 'NODE_ENV' because it is a read-only property.

@@ -1,0 +1,22 @@
+$ prisma generate && next build
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma\schema.prisma.
+
+✔ Generated Prisma Client (v7.10.1) to .\node_modules\.prisma\client in 85ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.4.0 (Turbopack)
+- Environments: .env
+✓ Running next.config.mjs took 27ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 2.9s
+  Running TypeScript ...
+tests/critical-paths.test.ts(127,15): error TS2540: Cannot assign to 'NODE_ENV' because it is a read-only property.
+tests/critical-paths.test.ts(134,17): error TS2540: Cannot assign to 'NODE_ENV' because it is a read-only property.
+Failed to type check.
+
+[ELIFECYCLE] Command failed with exit code 1.

@@ -1,0 +1,1 @@
+node_modules\next\types\global.d.ts:23:    readonly NODE_ENV: 'development' | 'production' | 'test'

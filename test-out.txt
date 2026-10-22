@@ -1,0 +1,18 @@
+$ tsx --test tests/critical-paths.test.ts
+✔ plate input normalization handles Arabic digits without a local fleet cache (1.249ms)
+✔ incident validation accepts a valid payload and rejects invalid plate and empty media (7.231ms)
+✔ idempotency replays the same request and rejects a changed payload (1.5079ms)
+✔ login validates credentials and rate limits repeated failures (0.7804ms)
+✔ login failures distinguish unapplied migrations from database outages without exposing raw errors (0.8713ms)
+✔ invalid session tokens are rejected when the signing secret is unavailable (0.246ms)
+✔ missing server configuration is reported without crashing app startup or Prisma module import (0.5072ms)
+✔ API rate limiter fails closed when a production request has no trusted client IP (37.9374ms)
+✔ incident status transitions are sequential and important transitions require confirmation (0.1897ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 971.9215
